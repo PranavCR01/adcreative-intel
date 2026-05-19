@@ -100,10 +100,9 @@ R2_ACCOUNT_ID, R2_ACCESS_KEY, R2_SECRET_KEY, R2_BUCKET
 HF_SPACES_URL, HF_TOKEN, API_TOKEN
 
 ## Current slice
-SLICE: 4 — Agentic Layer
-STATUS: COMPLETE — Slice 3 deployed and verified
-NEXT ACTION: Write agent/tools.py, agent/agent.py,
-             agent/prompts.py, api/routes/chat.py
+SLICE: 5 — Full-Stack Product
+STATUS: COMPLETE — Slice 4 deployed, Render backend live at adcreative-intel.onrender.com
+NEXT ACTION: Build frontend components, upload flow, Vercel deployment
 
 MODEL: model/best_alpha/ — Spearman r=0.2542, ALPHA=0.9
 HF HUB: https://huggingface.co/pcr12/creative-intelligence-scorer
