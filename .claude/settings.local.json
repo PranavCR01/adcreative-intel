@@ -12,7 +12,14 @@
       "Bash(python -c \"import json; d=json.load\\(open\\('data/real_ad_analysis.json'\\)\\); print\\(json.dumps\\(d, indent=2\\)\\)\")",
       "Bash(python scripts/reclassify_verticals.py)",
       "Bash(icacls *)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(git -C \"D:/Python files/adcreative-intel\" ls-files model/checkpoints/ model/best/ model/best_alpha/)",
+      "Bash(git -C \"D:/Python files/adcreative-intel\" ls-files --others --exclude-standard)",
+      "Bash(dir D:\\\\Python files\\\\adcreative-intel\\\\model\\\\best_alpha *)",
+      "Bash(git -C \"D:/Python files/adcreative-intel\" ls-files)",
+      "Bash(git -C \"D:/Python files/adcreative-intel\" status --short)",
+      "Bash(git *)",
+      "Bash(python *)"
     ]
   }
 }

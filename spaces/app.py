@@ -161,7 +161,7 @@ async def heatmap(
     _: None = Security(verify_token),
 ) -> dict:
     try:
-        model, _ = get_model()
+        model, processor = get_model()
     except Exception:
         raise HTTPException(status_code=503, detail=ERROR_MESSAGES["model_not_loaded"])
 
@@ -174,7 +174,7 @@ async def heatmap(
 
     try:
         # Single pass: returns overlay (for base64) + raw cam_16 (for region labels)
-        overlay, cam_16 = generate_heatmap_with_cam(model, pil_image, device="cpu")
+        overlay, cam_16 = generate_heatmap_with_cam(model, processor, pil_image, device="cpu")
 
         high_attention, low_attention = _cam_region_labels(cam_16)
 

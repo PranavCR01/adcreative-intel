@@ -12,6 +12,7 @@ from clip_head import CreativeScorer
 
 def _compute_cam(
     model: CreativeScorer,
+    processor: CLIPProcessor,
     image: Image.Image,
     device: str,
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -32,7 +33,6 @@ def _compute_cam(
 
     Returns (overlay uint8 224x224x3, cam_16x16 float32 normalized 0-1).
     """
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
     inputs = processor(images=image, return_tensors="pt")
     pixel_values = inputs["pixel_values"].to(device)
 
@@ -70,23 +70,30 @@ def _compute_cam(
     return overlay, cam.astype(np.float32)
 
 
-def generate_heatmap(model: CreativeScorer, image: Image.Image, device: str = "cpu") -> np.ndarray:
+def generate_heatmap(
+    model: CreativeScorer,
+    processor: CLIPProcessor,
+    image: Image.Image,
+    device: str = "cpu",
+) -> np.ndarray:
     """Returns overlay uint8 ndarray (224x224x3)."""
-    overlay, _ = _compute_cam(model, image, device)
+    overlay, _ = _compute_cam(model, processor, image, device)
     return overlay
 
 
 def generate_heatmap_with_cam(
     model: CreativeScorer,
+    processor: CLIPProcessor,
     image: Image.Image,
     device: str = "cpu",
 ) -> tuple[np.ndarray, np.ndarray]:
     """Returns (overlay uint8 224x224x3, cam_16x16 float32 normalized 0-1)."""
-    return _compute_cam(model, image, device)
+    return _compute_cam(model, processor, image, device)
 
 
 def save_heatmaps(
     model: CreativeScorer,
+    processor: CLIPProcessor,
     image_paths: List[str],
     output_dir: str,
     device: str = "cpu",
@@ -95,7 +102,7 @@ def save_heatmaps(
     out.mkdir(parents=True, exist_ok=True)
     for path in image_paths:
         image = Image.open(path).convert("RGB")
-        overlay = generate_heatmap(model, image, device)
+        overlay = generate_heatmap(model, processor, image, device)
         stem = Path(path).stem
         Image.fromarray(overlay).save(out / f"{stem}_heatmap.png")
         print(f"Saved: {stem}_heatmap.png")

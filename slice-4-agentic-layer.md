@@ -6,13 +6,13 @@ By end of this slice: /chat endpoint working locally, agent calls correct tools,
 every numerical claim traces to a tool result, Zustand trace store designed.
 
 ## Architecture decisions locked in this slice
-- Agent runs on LOCAL machine or HF Spaces — Railway free tier has no GPU
-- Qwen2.5-1.5B loaded in 4-bit with bitsandbytes — fits 1650 Ti (3.5GB VRAM)
-- smolagents CodeAgent is primary. If tool-call parsing fails after 4hrs debugging,
-  fall back to manual ReAct loop — document the switch in README
+- Anthropic Python SDK (0.97.0) + claude-haiku-4-5 — API-based, no local GPU needed
+- Manual ReAct loop is the primary approach — Claude responds in natural language,
+  Python parses Action: / Final Answer: lines, no framework dependency
+- ANTHROPIC_API_KEY via os.environ — add to Railway env vars in Slice 5
 - Agent response is a single JSON object returned over HTTP — NO SSE streaming
 - Reasoning trace is captured server-side and returned with the final answer
-- max_steps=5 on the agent — prevents infinite tool-call loops
+- max_steps=5 (range(5) loop in run_agent) — prevents infinite tool-call loops
 - Zustand store uses Map keyed by tool_call_id — not array (prevents re-render storms)
 - Every tool call is logged: tool_name, inputs, raw_output, duration_ms
 
@@ -20,7 +20,7 @@ every numerical claim traces to a tool result, Zustand trace store designed.
 ```
 agent/
 ├── tools.py          ← 4 tool functions wrapping HF Spaces API
-├── agent.py          ← smolagents CodeAgent setup + run loop
+├── agent.py          ← Anthropic SDK client + manual ReAct loop
 └── prompts.py        ← system prompt and few-shot examples
 api/
 ├── routes/
@@ -40,13 +40,13 @@ Every tool must:
 4. Log: tool name, inputs, output, duration_ms to a list for the trace
 
 ```python
-from smolagents import tool
-from api.hf_client import score_image, get_heatmap
-import httpx, time, os
+import time
 
-TRACE_LOG = []  # module-level, reset per request
+from api.db import get_db
 
-@tool
+TRACE_LOG = []  # module-level, reset per request in run_agent()
+
+
 def get_creative_score(image_id: str) -> dict:
     """
     Returns predicted CTR score and fatigue halflife for an uploaded creative.
@@ -59,7 +59,6 @@ def get_creative_score(image_id: str) -> dict:
     start = time.time()
     try:
         # Fetch from Supabase scores table (image already scored at upload time)
-        from api.db import get_db
         db = get_db()
         result = (db.table("cia_scores")
                    .select("ctr_score, halflife_days, confidence")
@@ -77,7 +76,7 @@ def get_creative_score(image_id: str) -> dict:
     except Exception as e:
         return {"error": f"Could not fetch score: {str(e)}"}
 
-@tool
+
 def get_heatmap_regions(image_id: str) -> dict:
     """
     Returns attention regions from GradCAM analysis of the creative.
@@ -91,7 +90,7 @@ def get_heatmap_regions(image_id: str) -> dict:
     # or re-request from HF Spaces if not cached
     ...
 
-@tool
+
 def get_benchmark(vertical: str) -> dict:
     """
     Returns industry benchmark CTR and fatigue halflife for a given vertical.
@@ -103,7 +102,7 @@ def get_benchmark(vertical: str) -> dict:
     """
     ...
 
-@tool
+
 def get_improvement_suggestions(image_id: str) -> dict:
     """
     Returns 3 concrete creative improvement suggestions based on score and heatmap.
@@ -119,39 +118,66 @@ def get_improvement_suggestions(image_id: str) -> dict:
     ...
 ```
 
-## agent.py — smolagents setup
+## agent.py — Anthropic SDK + manual ReAct loop
 
 ```python
-from smolagents import CodeAgent, HfApiModel
-from agent.tools import (get_creative_score, get_heatmap_regions,
-                          get_benchmark, get_improvement_suggestions, TRACE_LOG)
-from agent.prompts import SYSTEM_PROMPT
+import json
 import os
+import re
 
-def create_agent():
-    model = HfApiModel(
-        model_id="Qwen/Qwen2.5-1.5B-Instruct",
-        token=os.getenv("HF_TOKEN"),
-    )
-    # Use HF Inference API — avoids loading model locally on Railway
-    # For local dev: replace HfApiModel with TransformersModel (4-bit local)
-    agent = CodeAgent(
-        tools=[get_creative_score, get_heatmap_regions,
-               get_benchmark, get_improvement_suggestions],
-        model=model,
-        max_steps=5,            # hard cap — prevents infinite loops
-        system_prompt=SYSTEM_PROMPT,
-    )
-    return agent
+import anthropic
+
+from agent.tools import (
+    get_creative_score, get_heatmap_regions,
+    get_benchmark, get_improvement_suggestions, TRACE_LOG,
+)
+from agent.prompts import SYSTEM_PROMPT
+
+_client: anthropic.Anthropic | None = None
+
+
+def _get_client() -> anthropic.Anthropic:
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    return _client
+
+
+TOOL_MAP = {
+    "get_creative_score": get_creative_score,
+    "get_benchmark": get_benchmark,
+    "get_heatmap_regions": get_heatmap_regions,
+    "get_improvement_suggestions": get_improvement_suggestions,
+}
+
 
 def run_agent(image_id: str, user_message: str) -> dict:
     TRACE_LOG.clear()           # reset trace for this request
-    agent = create_agent()
-    full_prompt = f"[Creative ID: {image_id}]\n\nUser: {user_message}"
+    messages = [{"role": "user", "content": f"[Creative ID: {image_id}]\n\n{user_message}"}]
+    response_text = ""
     try:
-        answer = agent.run(full_prompt)
+        for _ in range(5):      # max_steps=5 — hard cap prevents infinite loops
+            resp = _get_client().messages.create(
+                model="claude-haiku-4-5",
+                max_tokens=1024,
+                system=SYSTEM_PROMPT,
+                messages=messages,
+            )
+            response_text = resp.content[0].text
+            action_match = re.search(r'Action:\s*(\w+)\(([^)]*)\)', response_text)
+            if not action_match:
+                break           # no more actions — extract Final Answer
+            tool_name = action_match.group(1)
+            arg = action_match.group(2).strip("\"'")
+            if tool_name in TOOL_MAP:
+                result = TOOL_MAP[tool_name](arg)
+            else:
+                result = {"error": f"Unknown tool: {tool_name}"}
+            messages.append({"role": "assistant", "content": response_text})
+            messages.append({"role": "user", "content": f"Result: {json.dumps(result)}"})
+        final = re.search(r'Final Answer:\s*(.+)', response_text, re.DOTALL)
         return {
-            "answer": str(answer),
+            "answer": final.group(1).strip() if final else response_text,
             "trace": list(TRACE_LOG),   # copy before next request clears it
             "image_id": image_id,
         }
@@ -160,7 +186,7 @@ def run_agent(image_id: str, user_message: str) -> dict:
             "answer": "I encountered an error analyzing this creative. Please try again.",
             "trace": list(TRACE_LOG),
             "image_id": image_id,
-            "error": str(e)     # logged server-side, not shown to user
+            "error": str(e),    # logged server-side, not shown to user
         }
 ```
 
@@ -177,64 +203,28 @@ CRITICAL RULES — follow these exactly:
 4. Never state a number that did not come from a tool call result.
 5. If a tool returns an error, say so clearly. Do not guess or substitute a number.
 
-Your answers should be:
-- Specific: reference actual numbers from tool results
-- Actionable: end with concrete changes the advertiser can make
-- Brief: 3-5 sentences maximum for the final answer
+To call a tool, respond with:
+Thought: [your reasoning about what to do next]
+Action: tool_name(argument)
 
-Example of a correct response:
-"Your creative has a CTR score of 0.31 and a predicted fatigue halflife of
-4.2 days (get_creative_score result). The gaming vertical median is 0.48 CTR
-and 8.3 days halflife (get_benchmark result). The heatmap shows your CTA
-button is in a low-attention bottom-left region (get_heatmap_regions result).
-Moving the CTA to center-right and reducing text density are the two changes
-most likely to extend performance."
+When you receive a Result, continue reasoning. When you have enough data, respond with:
+Final Answer: [your answer — specific, actionable, 3-5 sentences]
+
+Example of a correct response sequence:
+Thought: I need to get the CTR score for this creative before making any claims.
+Action: get_creative_score(abc-123)
+[after receiving result]
+Thought: Now I need the gaming benchmark to contextualize this score.
+Action: get_benchmark(gaming)
+[after receiving result]
+Final Answer: Your creative scores 0.31 CTR with a predicted fatigue halflife of
+4.2 days — below the gaming median of 0.48 CTR and 8.3 days halflife. The heatmap
+shows your CTA in the low-attention bottom-left region. Moving the CTA to
+center-right and reducing text density are the two changes most likely to extend
+performance.
 """
 ```
 
-## Manual ReAct fallback (use if smolagents fails)
-If smolagents tool-call parsing fails after 4 hours of debugging, implement
-a manual ReAct loop instead. Document the switch in README.
-
-```python
-# Manual ReAct pattern — pure Python, no framework dependency
-import json, re
-
-REACT_PROMPT = """You are analyzing ad creatives. Available tools:
-- get_creative_score(image_id) → {ctr_score, halflife_days, confidence}
-- get_benchmark(vertical) → {median_ctr, median_halflife}
-- get_heatmap_regions(image_id) → {high_attention, low_attention}
-- get_improvement_suggestions(image_id) → {suggestions}
-
-Respond with: Thought: [reasoning] Action: tool_name(arg) Result: [tool output]
-Repeat until you have enough data. Then respond: Final Answer: [your answer]
-"""
-
-TOOL_MAP = {
-    "get_creative_score": get_creative_score_fn,
-    "get_benchmark": get_benchmark_fn,
-    "get_heatmap_regions": get_heatmap_regions_fn,
-    "get_improvement_suggestions": get_improvement_suggestions_fn,
-}
-
-def react_loop(image_id: str, question: str, max_steps: int = 5) -> dict:
-    messages = [{"role": "system", "content": REACT_PROMPT}]
-    messages.append({"role": "user", "content": f"[{image_id}] {question}"})
-    trace = []
-    for step in range(max_steps):
-        response = call_llm(messages)   # call Qwen via HF Inference API
-        # Parse Action: tool_name(arg) from response
-        action_match = re.search(r'Action: (\w+)\(([^)]*)\)', response)
-        if not action_match:
-            break   # no more actions — extract Final Answer
-        tool_name, arg = action_match.group(1), action_match.group(2).strip('"\'')
-        result = TOOL_MAP[tool_name](arg)
-        trace.append({"tool": tool_name, "input": arg, "output": result})
-        messages.append({"role": "assistant", "content": response})
-        messages.append({"role": "user", "content": f"Result: {json.dumps(result)}"})
-    final = re.search(r'Final Answer: (.+)', response, re.DOTALL)
-    return {"answer": final.group(1).strip() if final else response, "trace": trace}
-```
 
 ## api/routes/chat.py — /chat endpoint
 ```python
@@ -313,18 +303,20 @@ export const useTraceStore = create<TraceStore>((set) => ({
 }))
 ```
 
-## Using HF Inference API vs local model
-smolagents `HfApiModel` calls Qwen2.5-1.5B via HF Inference API (free tier).
-This means no local GPU needed for the agent — the model runs on HF servers.
-Free tier allows ~1000 requests/day which is plenty for portfolio demos.
-For local dev/testing, swap to `TransformersModel` with 4-bit quantization.
+## Environment variables for this slice
+```
+ANTHROPIC_API_KEY=your_key    # add to Railway env vars in Slice 5
+```
+Haiku pricing: ~$0.001 per agent run (3-5 API calls × ~200 tokens each).
+Plenty for portfolio demos with no GPU requirement.
 
 ## Bug prevention checklist for this slice
 - [ ] TRACE_LOG.clear() at start of every run_agent call — never leaks between requests
-- [ ] max_steps=5 set on CodeAgent — test that it stops after 5 steps with a complex query
+- [ ] max_steps=5 (range(5) loop) — test that it stops after 5 steps with a complex query
+- [ ] ANTHROPIC_API_KEY in os.environ — run_agent will raise KeyError at startup if missing
 - [ ] ChatRequest.session_id has default "" — prevents 422 when frontend omits it
 - [ ] run_agent wraps everything in try/except — agent errors never propagate as 500 unhandled
-- [ ] Tools return {"error": "..."} dict on failure — never raise inside a tool function
+- [ ] Tools are plain functions returning dicts — never raise inside a tool function
 - [ ] Test: ask agent about a nonexistent image_id — confirm it returns error message, not hallucinated score
 - [ ] Test: ask a question that requires 3 tool calls — confirm all 3 appear in trace
 - [ ] lsof -i :8000 before starting local uvicorn
@@ -335,17 +327,16 @@ Starting Slice 4 of Creative Intelligence Agent. Read CLAUDE.md first,
 then slice-4-agentic-layer.md in full.
 
 Goals this session:
-1. Write agent/tools.py with all 4 tools — each wraps HF Spaces or Supabase,
-   returns structured dict, handles errors without raising, logs to TRACE_LOG
-2. Write agent/prompts.py with the system prompt from the slice doc
-3. Write agent/agent.py with smolagents CodeAgent, HfApiModel for Qwen2.5-1.5B,
-   max_steps=5, and run_agent() that clears TRACE_LOG on each call
+1. Write agent/tools.py with all 4 tools — plain Python functions, each returns
+   structured dict, handles errors without raising, logs to TRACE_LOG
+2. Write agent/prompts.py with the SYSTEM_PROMPT from the slice doc
+3. Write agent/agent.py with Anthropic SDK client, TOOL_MAP, and run_agent()
+   implementing the manual ReAct loop — max_steps=5, TRACE_LOG.clear() on each call
 4. Write api/routes/chat.py with /chat POST endpoint
 5. Update api/main.py to include the chat router
 6. Write frontend/src/store/traceStore.ts exactly as designed in the slice doc
 
-Use /plan first. Primary: smolagents CodeAgent. If parsing fails after
-debugging, implement the manual ReAct fallback from the slice doc instead.
+Use /plan first.
 ```
 
 ## Done when

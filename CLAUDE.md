@@ -100,10 +100,10 @@ R2_ACCOUNT_ID, R2_ACCESS_KEY, R2_SECRET_KEY, R2_BUCKET
 HF_SPACES_URL, HF_TOKEN, API_TOKEN
 
 ## Current slice
-SLICE: 3 — Model Serving on HF Spaces
-STATUS: Files written, model not yet deployed to HF Spaces
-NEXT ACTION: Deploy spaces/ to HF Spaces, create Supabase tables,
-             test /score /heatmap /benchmark /health endpoints
+SLICE: 4 — Agentic Layer
+STATUS: COMPLETE — Slice 3 deployed and verified
+NEXT ACTION: Write agent/tools.py, agent/agent.py,
+             agent/prompts.py, api/routes/chat.py
 
 MODEL: model/best_alpha/ — Spearman r=0.2542, ALPHA=0.9
 HF HUB: https://huggingface.co/pcr12/creative-intelligence-scorer
