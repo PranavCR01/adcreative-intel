@@ -101,8 +101,17 @@ HF_SPACES_URL, HF_TOKEN, API_TOKEN
 
 ## Current slice
 SLICE: 5 — Full-Stack Product
-STATUS: COMPLETE — Slice 4 deployed, Render backend live at adcreative-intel.onrender.com
-NEXT ACTION: Build frontend components, upload flow, Vercel deployment
+STATUS: Code complete, zero TS errors. Ready for build + deploy.
+NEXT ACTION:
+1. cd frontend && npm run build — verify production build passes
+2. git add -A && git commit -m "Slice 5: full-stack frontend + upload endpoint"
+3. git push origin master
+4. Deploy frontend/ to Vercel — set root directory to frontend/
+5. Add to Render env vars: SUPABASE_URL, SUPABASE_ANON_KEY,
+   HF_SPACES_URL, API_TOKEN, ANTHROPIC_API_KEY
+6. Set VITE_API_URL=https://adcreative-intel.onrender.com in Vercel
+   environment variables
+7. Test full flow: demo creative loads → scores show → chat works
 
 MODEL: model/best_alpha/ — Spearman r=0.2542, ALPHA=0.9
 HF HUB: https://huggingface.co/pcr12/creative-intelligence-scorer
@@ -112,6 +121,19 @@ COMPLETED:
 - Slice 2: training complete, best_alpha checkpoint, pushed to HF Hub
 - Slice 3 files written: spaces/, api/hf_client.py,
   api/db.py, .github/workflows/keepalive.yml
+- Slice 4: agentic layer — tools, ReAct loop, chat endpoint, traceStore
+- Slice 5 code complete:
+  - Pre-work: 3 demo images copied to frontend/public/demo/
+  - frontend/vercel.json (SPA rewrite)
+  - Vite+React+TS scaffolded, zustand installed, styles.css imported
+  - frontend/src/lib/errors.ts, imageUtils.ts, api.ts
+  - frontend/src/store/appStore.ts
+  - frontend/src/components/icons.tsx, HealthBanner.tsx
+  - frontend/src/App.tsx (hash router)
+  - frontend/src/pages/Landing.tsx, Analyzer.tsx, Benchmark.tsx
+  - frontend/.env (VITE_API_URL=https://adcreative-intel.onrender.com)
+  - api/routes/upload.py (Supabase Storage)
+  - api/main.py updated with upload router
 
 ## Apify data status
 - Run 1 complete: 589 ads, gaming/local mix, NO start/stop dates (active_status=active)

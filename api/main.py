@@ -20,6 +20,6 @@ async def health() -> dict:
 from api.routes.chat import router as chat_router
 app.include_router(chat_router, prefix="/chat")
 
-# Slice 5: include upload router
-# from api.routes.upload import router as upload_router
-# app.include_router(upload_router, prefix="/upload")
+# Slice 5: upload router
+from api.routes.upload import router as upload_router
+app.include_router(upload_router, prefix="/upload")

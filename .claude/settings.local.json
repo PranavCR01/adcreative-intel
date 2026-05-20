@@ -19,7 +19,10 @@
       "Bash(git -C \"D:/Python files/adcreative-intel\" ls-files)",
       "Bash(git -C \"D:/Python files/adcreative-intel\" status --short)",
       "Bash(git *)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Copy-Item *)",
+      "Bash(npm run *)"
     ]
   }
 }

@@ -1,4 +1,5 @@
 import argparse
+import math
 from pathlib import Path
 
 import numpy as np
@@ -24,6 +25,46 @@ def _load_model(checkpoint_dir: str) -> CreativeScorer:
     else:
         raise FileNotFoundError(f"No model weights found in {checkpoint_dir}")
     return model
+
+
+def infer_single(
+    image_path: str,
+    vertical: str,
+    checkpoint_dir: str = "model/best_alpha",
+) -> dict:
+    """Single-image inference. vertical is accepted for API contract parity but unused in computation."""
+    from PIL import Image
+    from transformers import CLIPProcessor
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = _load_model(checkpoint_dir).to(device)
+    model.eval()
+
+    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    image = Image.open(image_path).convert("RGB")
+    pixel_values = processor(images=image, return_tensors="pt")["pixel_values"].to(device)
+
+    with torch.no_grad():
+        out = model(pixel_values=pixel_values)
+
+    ctr = float(out["ctr_score"].squeeze())
+
+    # Clamp matches WeibullNLLLoss clamp — never remove
+    log_scale = float(out["weibull_params"][0, 0].clamp(-10, 10))
+    log_shape = float(out["weibull_params"][0, 1].clamp(-10, 10))
+    scale = math.exp(log_scale)   # λ
+    shape = math.exp(log_shape)   # k
+    # Weibull median: S(t)=0.5 → t = λ * ln(2)^(1/k)
+    halflife = scale * (math.log(2) ** (1.0 / shape))
+
+    # Distance from decision boundary → proxy for prediction confidence
+    confidence = abs(ctr - 0.5) * 2
+
+    return {
+        "ctr_score": round(ctr, 4),
+        "halflife_days": round(halflife, 2),
+        "confidence": round(confidence, 4),
+    }
 
 
 def run_eval(
