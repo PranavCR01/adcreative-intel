@@ -4,12 +4,13 @@ from transformers import CLIPVisionModel
 
 
 class CreativeScorer(nn.Module):
-    def __init__(self):
+    def __init__(self, local_files_only: bool = False):
         super().__init__()
         # Frozen CLIP backbone — NEVER set requires_grad=True on these params
         self.clip = CLIPVisionModel.from_pretrained(
             "openai/clip-vit-base-patch32",
             use_safetensors=True,
+            local_files_only=local_files_only,
         )
         for param in self.clip.parameters():
             param.requires_grad = False

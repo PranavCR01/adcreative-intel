@@ -227,9 +227,9 @@ def main():
     train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
     print(f"Train: {len(train_df)}, Test: {len(test_df)}")
 
-    # Load CLIP processor
+    # Load CLIP processor — local_files_only avoids HF Hub network check that hangs
     print("\nLoading CLIP processor...")
-    processor = CLIPProcessor.from_pretrained(config.clip_model)
+    processor = CLIPProcessor.from_pretrained(config.clip_model, local_files_only=True)
 
     # Create datasets
     train_dataset = AdDataset(train_df, processor, config)
@@ -242,7 +242,7 @@ def main():
 
     # Create model — uses canonical CreativeScorer (frozen CLIP + multi-task head)
     print("\nInitializing model...")
-    model = CreativeScorer().to(config.device)
+    model = CreativeScorer(local_files_only=True).to(config.device)
 
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
