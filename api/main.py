@@ -1,8 +1,20 @@
 import os
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Creative Intelligence API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://adcreative-intel.vercel.app",
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 ERROR_MESSAGES = {
     "model_not_loaded": "Model is warming up. Please retry in 30 seconds.",

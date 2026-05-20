@@ -20,7 +20,7 @@ class ChatResponse(BaseModel):
     image_id: str
 
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post("", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     try:
         result = await asyncio.to_thread(run_agent, request.image_id, request.message)
