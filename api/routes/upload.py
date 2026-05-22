@@ -24,8 +24,8 @@ async def upload_creative(
             file=image_bytes,
             file_options={"content-type": "image/jpeg"},
         )
-    except Exception:
-        raise HTTPException(status_code=500, detail="Upload storage failed.")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Upload storage failed: {exc}")
 
     # 2. Insert into Supabase DB (storage_path stored in r2_key column)
     await insert_upload(upload_id, storage_path, vertical, session_id or upload_id)
@@ -33,14 +33,14 @@ async def upload_creative(
     # 3. Score via HF Spaces
     try:
         score_result = await score_image(image_bytes, vertical)
-    except Exception:
-        raise HTTPException(status_code=503, detail="Model is warming up. Please retry.")
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Model is warming up. Please retry. ({exc})")
 
     # 4. Get heatmap (non-fatal — returns empty on failure)
     try:
         heatmap_result = await get_heatmap(image_bytes)
-    except Exception:
-        heatmap_result = {"heatmap_b64": "", "high_attention": [], "low_attention": []}
+    except Exception as exc:
+        heatmap_result = {"heatmap_b64": "", "high_attention": [], "low_attention": [], "_heatmap_err": str(exc)}
 
     # 5. Persist score
     await upsert_score(
