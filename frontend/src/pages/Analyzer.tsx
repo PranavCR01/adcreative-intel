@@ -249,7 +249,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             )}
           </div>
 
-          <ChatPanel key={chatKey} demo={demo} imageId={currentImageId} vertical={vertical} />
+          <ChatPanel key={chatKey} demo={demo} imageId={currentImageId} vertical={vertical} isDemo={!uploadId} />
         </div>
       </div>
 
@@ -363,11 +363,13 @@ interface Message {
   open?: boolean
 }
 
-function ChatPanel({ demo, imageId, vertical }: { demo: Demo; imageId: string; vertical: string }) {
-  const [messages, setMessages] = useState<Message[]>([{
-    role: 'agent', time: 'now', latency: demo.initial.trace.reduce((s, t) => s + t.dur, 0),
-    text: demo.initial.summary, trace: demo.initial.trace, open: false,
-  }])
+function ChatPanel({ demo, imageId, vertical, isDemo }: { demo: Demo; imageId: string; vertical: string; isDemo: boolean }) {
+  const [messages, setMessages] = useState<Message[]>(
+    isDemo
+      ? [{ role: 'agent', time: 'now', latency: demo.initial.trace.reduce((s, t) => s + (t.dur ?? 0), 0),
+           text: demo.initial.summary, trace: demo.initial.trace, open: false }]
+      : []
+  )
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const streamRef = useRef<HTMLDivElement>(null)
@@ -375,6 +377,10 @@ function ChatPanel({ demo, imageId, vertical }: { demo: Demo; imageId: string; v
   useEffect(() => {
     if (streamRef.current) streamRef.current.scrollTop = streamRef.current.scrollHeight
   }, [messages, busy])
+
+  useEffect(() => {
+    if (!isDemo) send('Analyze this creative and give me the key performance insights.')
+  }, [])
 
   function toggleTrace(idx: number) {
     setMessages(m => m.map((x, i) => i === idx ? { ...x, open: !x.open } : x))
