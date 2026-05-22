@@ -90,6 +90,7 @@ function pct(v: number, max: number) {
 export default function Analyzer({ navigate: _navigate }: { navigate: (p: string) => void }) {
   const [vertical, setVertical] = useState('gaming')
   const [heat, setHeat] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
   const [dragOver, setDrag] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const { isScoring, setIsScoring, setScore, setUploadId, score, uploadId } = useAppStore()
@@ -145,8 +146,8 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
               <option value="finance">Finance · Neobank</option>
             </select>
           </div>
-          <button className="btn btn-sm" onClick={() => { setHeat(false); useAppStore.getState().reset() }}>
-            <IconSparkle size={12} /> Reset
+          <button className="btn btn-sm" onClick={() => { setIsResetting(true); setHeat(false); useAppStore.getState().reset(); setIsResetting(false) }}>
+            <span className={isResetting ? 'spin' : ''}><IconSparkle size={12} /></span> Reset
           </button>
         </div>
       </div>
@@ -159,11 +160,11 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             </div>
             <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>224×224 · JPEG</span>
           </div>
-          <div className="creative-area">
+          <div className="creative-area" style={{ overflow: 'hidden' }}>
             <img
               src={displayImageSrc}
               alt={demo.label}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
             />
             {heat && useAppStore.getState().heatmapB64 && (
               <img
@@ -198,7 +199,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             </div>
             {isScoring ? (
               <div style={{ padding: '32px 24px', textAlign: 'center', color: 'var(--text-2)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
-                Scoring your creative…<span className="cursor">▍</span>
+                Scoring your creative… this may take up to 30s on first load<span className="cursor">▍</span>
               </div>
             ) : (
               <>
@@ -246,7 +247,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             )}
           </div>
 
-          <ChatPanel key={vertical + (uploadId ?? '')} demo={demo} imageId={currentImageId} />
+          <ChatPanel key={vertical + (uploadId ?? '')} demo={demo} imageId={currentImageId} vertical={vertical} />
         </div>
       </div>
 
@@ -350,7 +351,7 @@ function WeibullCurve({ halflife }: { halflife: number }) {
   )
 }
 
-interface TraceItem { tool: string; dur: number; out: string }
+interface TraceItem { tool: string; dur?: number; out?: string; duration_ms?: number; output?: unknown }
 interface Message {
   role: 'user' | 'agent'
   time: string
@@ -360,7 +361,7 @@ interface Message {
   open?: boolean
 }
 
-function ChatPanel({ demo, imageId }: { demo: Demo; imageId: string }) {
+function ChatPanel({ demo, imageId, vertical }: { demo: Demo; imageId: string; vertical: string }) {
   const [messages, setMessages] = useState<Message[]>([{
     role: 'agent', time: 'now', latency: demo.initial.trace.reduce((s, t) => s + t.dur, 0),
     text: demo.initial.summary, trace: demo.initial.trace, open: false,
@@ -384,7 +385,7 @@ function ChatPanel({ demo, imageId }: { demo: Demo; imageId: string }) {
     setText('')
     setBusy(true)
     try {
-      const result = await sendChat(imageId, q)
+      const result = await sendChat(imageId, q, vertical)
       const agentMsg: Message = {
         role: 'agent',
         time: new Date().toLocaleTimeString(),
@@ -410,7 +411,7 @@ function ChatPanel({ demo, imageId }: { demo: Demo; imageId: string }) {
     <div className="card chat">
       <div className="card-header">
         <div className="card-title">
-          <IconSparkle size={12} /> Explanation Agent
+          <span className={busy ? 'spin' : ''}><IconSparkle size={12} /></span> Explanation Agent
           <span className="kbd">claude-haiku-4-5</span>
         </div>
         <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>4 tools loaded</span>
@@ -478,9 +479,9 @@ function Msg({ m, idx, toggleTrace }: { m: Message; idx: number; toggleTrace: (i
                     <span className="trace-pin"><IconTool size={12} /></span>
                     <div className="trace-content">
                       <div><span className="trace-tool">{t.tool}</span>()</div>
-                      <div className="trace-out">{t.out}</div>
+                      <div className="trace-out">{typeof t.output === 'string' ? t.output : t.out ?? (t.output != null ? JSON.stringify(t.output) : '')}</div>
                     </div>
-                    <span className="trace-dur">{t.dur || (t as any).duration_ms}ms</span>
+                    <span className="trace-dur">{t.duration_ms ?? t.dur}ms</span>
                   </div>
                 ))}
               </div>

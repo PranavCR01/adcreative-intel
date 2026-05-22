@@ -54,11 +54,11 @@ export async function uploadCreative(file: File, vertical: string) {
   return { uploadId, ...result }
 }
 
-export async function sendChat(imageId: string, message: string) {
+export async function sendChat(imageId: string, message: string, vertical = 'gaming') {
   const res = await fetchWithRetry(`${BACKEND_URL}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image_id: imageId, message }),
+    body: JSON.stringify({ image_id: imageId, message, vertical }),
   })
   return res.json()
 }

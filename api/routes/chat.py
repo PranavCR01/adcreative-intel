@@ -12,6 +12,7 @@ class ChatRequest(BaseModel):
     image_id: str
     message: str
     session_id: str = ""    # optional, default prevents 422
+    vertical: str = "gaming"
 
 
 class ChatResponse(BaseModel):
