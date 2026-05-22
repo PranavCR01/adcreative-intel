@@ -91,6 +91,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
   const [vertical, setVertical] = useState('gaming')
   const [heat, setHeat] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
+  const [chatKey, setChatKey] = useState(0)
   const [dragOver, setDrag] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const { isScoring, setIsScoring, setScore, setUploadId, score, uploadId } = useAppStore()
@@ -114,6 +115,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
       setScore({ ctr_score: result.ctr_score, halflife_days: result.halflife_days, confidence: result.confidence })
       useAppStore.getState().setImageUrl(URL.createObjectURL(file))
       if (result.heatmap_b64) useAppStore.getState().setHeatmap(result.heatmap_b64)
+      setChatKey(k => k + 1)
     } catch (err) {
       setUploadError(getUserMessage(err))
     } finally {
@@ -140,7 +142,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <span className="muted" style={{ fontSize: 12.5 }}>Demo:</span>
           <div className="select">
-            <select value={vertical} onChange={(e) => { setVertical(e.target.value); useAppStore.getState().reset() }}>
+            <select value={vertical} onChange={(e) => { setVertical(e.target.value); useAppStore.getState().reset(); setChatKey(k => k + 1) }}>
               <option value="gaming">Gaming · Mobile RPG</option>
               <option value="ecommerce">Ecommerce · DTC</option>
               <option value="finance">Finance · Neobank</option>
@@ -160,17 +162,17 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             </div>
             <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>224×224 · JPEG</span>
           </div>
-          <div className="creative-area" style={{ overflow: 'hidden' }}>
+          <div className="creative-area" style={{ position: 'relative', overflow: 'hidden' }}>
             <img
               src={displayImageSrc}
               alt={demo.label}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
             />
             {heat && useAppStore.getState().heatmapB64 && (
               <img
                 src={`data:image/png;base64,${useAppStore.getState().heatmapB64}`}
                 alt="heatmap"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6, borderRadius: 6 }}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', opacity: 0.4, pointerEvents: 'none' }}
               />
             )}
           </div>
@@ -247,7 +249,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             )}
           </div>
 
-          <ChatPanel key={vertical + (uploadId ?? '')} demo={demo} imageId={currentImageId} vertical={vertical} />
+          <ChatPanel key={chatKey} demo={demo} imageId={currentImageId} vertical={vertical} />
         </div>
       </div>
 
