@@ -30,7 +30,6 @@ async def insert_upload(
             "vertical": vertical,
             "user_session": session_id,
         })
-        .select()   # surfaces insert errors immediately — never silent failures
         .execute()
     )
     return result.data[0]
@@ -51,7 +50,6 @@ async def upsert_score(
             "halflife_days": halflife_days,
             "confidence": confidence,
         })
-        .select()   # safe because UNIQUE(upload_id) exists on cia_scores
         .execute()
     )
     return result.data[0]
