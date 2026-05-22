@@ -2,6 +2,7 @@ import { ERROR_MESSAGES } from './errors'
 import { resizeImage } from './imageUtils'
 
 const BACKEND_URL = import.meta.env.VITE_API_URL
+if (!BACKEND_URL) console.warn('VITE_API_URL is not set — upload requests will hit relative /upload')
 
 class APIError extends Error {
   status: number

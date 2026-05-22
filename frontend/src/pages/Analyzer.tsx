@@ -91,6 +91,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
   const [vertical, setVertical] = useState('gaming')
   const [heat, setHeat] = useState(false)
   const [dragOver, setDrag] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const { isScoring, setIsScoring, setScore, setUploadId, score, uploadId } = useAppStore()
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -104,6 +105,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
 
   async function handleFile(file: File) {
     if (!file) return
+    setUploadError(null)
     setIsScoring(true)
     try {
       const result = await uploadCreative(file, vertical)
@@ -112,7 +114,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
       useAppStore.getState().setImageUrl(URL.createObjectURL(file))
       if (result.heatmap_b64) useAppStore.getState().setHeatmap(result.heatmap_b64)
     } catch (err) {
-      console.error(getUserMessage(err))
+      setUploadError(getUserMessage(err))
     } finally {
       setIsScoring(false)
     }
@@ -195,8 +197,8 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
               </span>
             </div>
             {isScoring ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                scoring… <span className="cursor">▍</span>
+              <div style={{ padding: '32px 24px', textAlign: 'center', color: 'var(--text-2)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
+                Scoring your creative…<span className="cursor">▍</span>
               </div>
             ) : (
               <>
@@ -269,6 +271,11 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
           <button className="btn" onClick={(e) => { e.stopPropagation(); fileRef.current?.click() }}>Browse files</button>
         </div>
       </div>
+      {uploadError && (
+        <p style={{ marginTop: 8, fontSize: 12, color: '#c44021', fontFamily: 'var(--font-mono)' }}>
+          {uploadError}
+        </p>
+      )}
     </>
   )
 }
