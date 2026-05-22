@@ -1,6 +1,5 @@
 import json
 import os
-import re
 
 import anthropic
 
@@ -30,37 +29,65 @@ TOOL_MAP = {
     "get_improvement_suggestions": get_improvement_suggestions,
 }
 
+TOOL_SCHEMAS = [
+    {
+        "name": "get_creative_score",
+        "description": "Returns predicted CTR score and fatigue halflife for an uploaded creative. Call this first.",
+        "input_schema": {"type": "object", "properties": {"image_id": {"type": "string"}}, "required": ["image_id"]},
+    },
+    {
+        "name": "get_heatmap_regions",
+        "description": "Returns GradCAM attention regions (high/low) for the creative.",
+        "input_schema": {"type": "object", "properties": {"image_id": {"type": "string"}}, "required": ["image_id"]},
+    },
+    {
+        "name": "get_benchmark",
+        "description": "Returns industry benchmark CTR and halflife for a vertical. Call before comparing scores.",
+        "input_schema": {"type": "object", "properties": {"vertical": {"type": "string", "enum": ["gaming", "ecommerce", "finance", "other"]}}, "required": ["vertical"]},
+    },
+    {
+        "name": "get_improvement_suggestions",
+        "description": "Returns 3 concrete improvement suggestions. Call after get_creative_score and get_heatmap_regions.",
+        "input_schema": {"type": "object", "properties": {"image_id": {"type": "string"}}, "required": ["image_id"]},
+    },
+]
+
 
 def run_agent(image_id: str, user_message: str) -> dict:
     TRACE_LOG.clear()           # reset trace for this request
     messages = [{"role": "user", "content": f"[Creative ID: {image_id}]\n\n{user_message}"}]
-    response_text = ""
     try:
         for _ in range(5):      # max_steps=5 — hard cap prevents infinite loops
             resp = _get_client().messages.create(
                 model="claude-haiku-4-5",
                 max_tokens=1024,
                 system=SYSTEM_PROMPT,
+                tools=TOOL_SCHEMAS,
                 messages=messages,
             )
-            response_text = resp.content[0].text
-            action_match = re.search(r'Action:\s*(\w+)\(([^)]*)\)', response_text)
-            if not action_match:
-                break           # no more actions — extract Final Answer
-            tool_name = action_match.group(1)
-            arg = action_match.group(2).strip("\"'")
-            if tool_name in TOOL_MAP:
-                result = TOOL_MAP[tool_name](arg)
-            else:
-                result = {"error": f"Unknown tool: {tool_name}"}
-            messages.append({"role": "assistant", "content": response_text})
-            messages.append({"role": "user", "content": f"Result: {json.dumps(result)}"})
-        final = re.search(r'Final Answer:\s*(.+)', response_text, re.DOTALL)
-        return {
-            "answer": final.group(1).strip() if final else response_text,
-            "trace": list(TRACE_LOG),   # copy before next request clears it
-            "image_id": image_id,
-        }
+            if resp.stop_reason == "end_turn":
+                answer = next(
+                    (block.text for block in resp.content if hasattr(block, "text")), ""
+                )
+                return {"answer": answer, "trace": list(TRACE_LOG), "image_id": image_id}
+
+            # stop_reason == "tool_use" — execute every tool block in this turn
+            tool_results = []
+            for block in resp.content:
+                if block.type != "tool_use":
+                    continue
+                fn = TOOL_MAP.get(block.name)
+                arg = list(block.input.values())[0] if block.input else ""
+                result = fn(arg) if fn else {"error": f"Unknown tool: {block.name}"}
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": json.dumps(result),
+                })
+            messages.append({"role": "assistant", "content": resp.content})
+            messages.append({"role": "user",      "content": tool_results})
+
+        return {"answer": "Analysis incomplete — too many steps.", "trace": list(TRACE_LOG), "image_id": image_id}
     except Exception as e:
         return {
             "answer": "I encountered an error analyzing this creative. Please try again.",
