@@ -5,7 +5,6 @@ import anthropic
 
 from agent.prompts import SYSTEM_PROMPT
 from agent.tools import (
-    TRACE_LOG,
     get_benchmark,
     get_creative_score,
     get_heatmap_regions,
@@ -54,7 +53,7 @@ TOOL_SCHEMAS = [
 
 
 def run_agent(image_id: str, user_message: str) -> dict:
-    TRACE_LOG.clear()           # reset trace for this request
+    trace: list[dict] = []
     messages = [{"role": "user", "content": f"[Creative ID: {image_id}]\n\n{user_message}"}]
     try:
         for _ in range(5):      # max_steps=5 — hard cap prevents infinite loops
@@ -69,7 +68,7 @@ def run_agent(image_id: str, user_message: str) -> dict:
                 answer = next(
                     (block.text for block in resp.content if hasattr(block, "text")), ""
                 )
-                return {"answer": answer, "trace": list(TRACE_LOG), "image_id": image_id}
+                return {"answer": answer, "trace": trace, "image_id": image_id}
 
             # stop_reason == "tool_use" — execute every tool block in this turn
             tool_results = []
@@ -78,7 +77,7 @@ def run_agent(image_id: str, user_message: str) -> dict:
                     continue
                 fn = TOOL_MAP.get(block.name)
                 arg = list(block.input.values())[0] if block.input else ""
-                result = fn(arg) if fn else {"error": f"Unknown tool: {block.name}"}
+                result = fn(arg, trace=trace) if fn else {"error": f"Unknown tool: {block.name}"}
                 tool_results.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,
@@ -87,11 +86,11 @@ def run_agent(image_id: str, user_message: str) -> dict:
             messages.append({"role": "assistant", "content": resp.content})
             messages.append({"role": "user",      "content": tool_results})
 
-        return {"answer": "Analysis incomplete — too many steps.", "trace": list(TRACE_LOG), "image_id": image_id}
+        return {"answer": "Analysis incomplete — too many steps.", "trace": trace, "image_id": image_id}
     except Exception as e:
         return {
             "answer": "I encountered an error analyzing this creative. Please try again.",
-            "trace": list(TRACE_LOG),
+            "trace": trace,
             "image_id": image_id,
             "error": str(e),    # logged server-side, not shown to user
         }

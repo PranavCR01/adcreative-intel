@@ -6,8 +6,6 @@ import anthropic
 
 from api.db import get_db
 
-TRACE_LOG: list[dict] = []  # module-level, reset per request in run_agent()
-
 _suggestions_client: anthropic.Anthropic | None = None
 
 
@@ -26,7 +24,7 @@ _BENCHMARKS = {
 }
 
 
-def get_creative_score(image_id: str) -> dict:
+def get_creative_score(image_id: str, trace: list[dict]) -> dict:
     """
     Returns predicted CTR score and fatigue halflife for an uploaded creative.
     Use this first when asked about creative performance.
@@ -46,7 +44,7 @@ def get_creative_score(image_id: str) -> dict:
             .execute()
         )
         data = result.data
-        TRACE_LOG.append({
+        trace.append({
             "tool": "get_creative_score",
             "inputs": {"image_id": image_id},
             "output": data,
@@ -57,7 +55,7 @@ def get_creative_score(image_id: str) -> dict:
         return {"error": f"Could not fetch score: {str(e)}"}
 
 
-def get_heatmap_regions(image_id: str) -> dict:
+def get_heatmap_regions(image_id: str, trace: list[dict]) -> dict:
     """
     Returns attention regions from GradCAM analysis of the creative.
     Use this when asked why specific elements are working or not.
@@ -85,7 +83,7 @@ def get_heatmap_regions(image_id: str) -> dict:
             }
         else:
             data = regions
-        TRACE_LOG.append({
+        trace.append({
             "tool": "get_heatmap_regions",
             "inputs": {"image_id": image_id},
             "output": data,
@@ -96,7 +94,7 @@ def get_heatmap_regions(image_id: str) -> dict:
         return {"error": f"Could not fetch heatmap regions: {str(e)}"}
 
 
-def get_benchmark(vertical: str) -> dict:
+def get_benchmark(vertical: str, trace: list[dict]) -> dict:
     """
     Returns industry benchmark CTR and fatigue halflife for a given vertical.
     Always call this to give context before comparing a score.
@@ -110,7 +108,7 @@ def get_benchmark(vertical: str) -> dict:
     if key not in _BENCHMARKS:
         return {"error": f"Unknown vertical '{vertical}'. Valid: {list(_BENCHMARKS)}"}
     data = {"vertical": key, **_BENCHMARKS[key]}
-    TRACE_LOG.append({
+    trace.append({
         "tool": "get_benchmark",
         "inputs": {"vertical": vertical},
         "output": data,
@@ -119,7 +117,7 @@ def get_benchmark(vertical: str) -> dict:
     return data
 
 
-def get_improvement_suggestions(image_id: str) -> dict:
+def get_improvement_suggestions(image_id: str, trace: list[dict]) -> dict:
     """
     Returns 3 concrete creative improvement suggestions based on score and heatmap.
     Call this after get_creative_score and get_heatmap_regions.
@@ -177,7 +175,7 @@ def get_improvement_suggestions(image_id: str) -> dict:
             suggestions = [s.strip("- ").strip() for s in raw.split("\n") if s.strip()][:3]
 
         data = {"suggestions": suggestions[:3]}
-        TRACE_LOG.append({
+        trace.append({
             "tool": "get_improvement_suggestions",
             "inputs": {"image_id": image_id},
             "output": data,

@@ -28,7 +28,10 @@ async def upload_creative(
         raise HTTPException(status_code=500, detail=f"Upload storage failed: {exc}")
 
     # 2. Insert into Supabase DB (storage_path stored in r2_key column)
-    await insert_upload(upload_id, storage_path, vertical, session_id or upload_id)
+    try:
+        await insert_upload(upload_id, storage_path, vertical, session_id or upload_id)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to record upload metadata.")
 
     # 3. Score via HF Spaces
     try:
@@ -43,16 +46,21 @@ async def upload_creative(
         heatmap_result = {"heatmap_b64": "", "high_attention": [], "low_attention": [], "_heatmap_err": str(exc)}
 
     # 5. Persist score
-    await upsert_score(
-        upload_id,
-        score_result["ctr_score"],
-        score_result.get("halflife_days"),
-        score_result["confidence"],
-    )
+    try:
+        await upsert_score(
+            upload_id,
+            score_result["ctr_score"],
+            score_result.get("halflife_days"),
+            score_result["confidence"],
+        )
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to persist score.")
 
     return {
         "upload_id": upload_id,
-        **score_result,
+        "ctr_score": score_result["ctr_score"],
+        "halflife_days": score_result["halflife_days"],
+        "confidence": score_result["confidence"],
         "heatmap_b64": heatmap_result.get("heatmap_b64", ""),
         "high_attention": heatmap_result.get("high_attention", []),
         "low_attention": heatmap_result.get("low_attention", []),

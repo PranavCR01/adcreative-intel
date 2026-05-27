@@ -184,7 +184,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
               </button>
             </div>
             <div className="creative-meta">
-              <span>backbone: clip-vit-b/32</span>
+              <span>backbone: siglip2-base-patch16-224</span>
               <span>·</span>
               <span>grad-cam: layer 11</span>
             </div>

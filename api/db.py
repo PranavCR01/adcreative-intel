@@ -32,6 +32,8 @@ async def insert_upload(
         })
         .execute()
     )
+    if not result.data:
+        raise RuntimeError(f"Supabase returned no data for insert_upload({upload_id})")
     return result.data[0]
 
 
@@ -52,4 +54,6 @@ async def upsert_score(
         })
         .execute()
     )
+    if not result.data:
+        raise RuntimeError(f"Supabase returned no data for upsert_score({upload_id})")
     return result.data[0]

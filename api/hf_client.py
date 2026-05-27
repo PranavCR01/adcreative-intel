@@ -1,14 +1,18 @@
 import os
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_fixed
 
 HF_SPACES_URL = os.environ["HF_SPACES_URL"]
 API_TOKEN = os.environ["API_TOKEN"]
 _HEADERS = {"Authorization": f"Bearer {API_TOKEN}"}
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(3))
+def _is_server_error(exc: BaseException) -> bool:
+    return isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code >= 500
+
+
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(3), retry=retry_if_exception(_is_server_error))
 async def score_image(image_bytes: bytes, vertical: str) -> dict:
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
@@ -21,7 +25,7 @@ async def score_image(image_bytes: bytes, vertical: str) -> dict:
         return resp.json()
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(3))
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(3), retry=retry_if_exception(_is_server_error))
 async def get_heatmap(image_bytes: bytes) -> dict:
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
