@@ -41,7 +41,7 @@ def _compute_cam(
     model.zero_grad()
 
     # Forward outside torch.no_grad() so autograd builds the computation graph.
-    # The clip block inside forward() uses its own no_grad, so the backbone stays
+    # The backbone block inside forward() uses its own no_grad, so the backbone stays
     # frozen while the projection layer's params remain in the graph.
     outputs = model(pixel_values)
     shared_repr = outputs["shared_repr"]  # (1, 256)

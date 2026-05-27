@@ -32,7 +32,7 @@ class CreativeScorer(nn.Module):
             pass
         else:
             with torch.no_grad():
-                clip_out = self.clip(pixel_values=pixel_values)
+                clip_out = self.backbone(pixel_values=pixel_values)
                 embedding = clip_out.pooler_output  # (batch, 768)
 
         shared = self.projection(embedding)         # (batch, 256)
