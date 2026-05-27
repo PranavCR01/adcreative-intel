@@ -34,13 +34,13 @@ def infer_single(
 ) -> dict:
     """Single-image inference. vertical is accepted for API contract parity but unused in computation."""
     from PIL import Image
-    from transformers import CLIPProcessor
+    from transformers import AutoProcessor
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = _load_model(checkpoint_dir).to(device)
     model.eval()
 
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    processor = AutoProcessor.from_pretrained("google/siglip2-base-patch16-224")
     image = Image.open(image_path).convert("RGB")
     pixel_values = processor(images=image, return_tensors="pt")["pixel_values"].to(device)
 

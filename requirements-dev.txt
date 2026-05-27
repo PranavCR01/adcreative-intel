@@ -1,0 +1,7 @@
+fiftyone
+scipy
+scikit-learn
+pandas
+torch
+transformers
+huggingface_hub

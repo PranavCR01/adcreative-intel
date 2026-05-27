@@ -51,7 +51,7 @@ def main():
     print("Dataset keys OK:", list(sample.keys()))
 
     model = CreativeScorer()
-    assert not any(p.requires_grad for p in model.clip.parameters())
+    assert not any(p.requires_grad for p in model.backbone.parameters())
 
     args = TrainingArguments(
         output_dir="./model/checkpoints",

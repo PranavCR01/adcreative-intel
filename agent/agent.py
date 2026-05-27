@@ -1,25 +1,13 @@
 import json
-import os
-
-import anthropic
 
 from agent.prompts import SYSTEM_PROMPT
 from agent.tools import (
+    _get_client,
     get_benchmark,
     get_creative_score,
     get_heatmap_regions,
     get_improvement_suggestions,
 )
-
-_client: anthropic.Anthropic | None = None
-
-
-def _get_client() -> anthropic.Anthropic:
-    global _client
-    if _client is None:
-        _client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    return _client
-
 
 TOOL_MAP = {
     "get_creative_score": get_creative_score,
@@ -76,8 +64,7 @@ def run_agent(image_id: str, user_message: str) -> dict:
                 if block.type != "tool_use":
                     continue
                 fn = TOOL_MAP.get(block.name)
-                arg = list(block.input.values())[0] if block.input else ""
-                result = fn(arg, trace=trace) if fn else {"error": f"Unknown tool: {block.name}"}
+                result = fn(**block.input, trace=trace) if fn else {"error": f"Unknown tool: {block.name}"}
                 tool_results.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,

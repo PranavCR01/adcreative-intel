@@ -6,14 +6,14 @@ import anthropic
 
 from api.db import get_db
 
-_suggestions_client: anthropic.Anthropic | None = None
+_anthropic_client: anthropic.Anthropic | None = None
 
 
-def _get_suggestions_client() -> anthropic.Anthropic:
-    global _suggestions_client
-    if _suggestions_client is None:
-        _suggestions_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    return _suggestions_client
+def _get_client() -> anthropic.Anthropic:
+    global _anthropic_client
+    if _anthropic_client is None:
+        _anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    return _anthropic_client
 
 
 _BENCHMARKS = {
@@ -152,7 +152,7 @@ def get_improvement_suggestions(image_id: str, trace: list[dict]) -> dict:
             f"- Low-attention regions: {low}\n"
         )
 
-        resp = _get_suggestions_client().messages.create(
+        resp = _get_client().messages.create(
             model="claude-haiku-4-5",
             max_tokens=512,
             system=(

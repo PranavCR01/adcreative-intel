@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from huggingface_hub import HfApi, create_repo, upload_folder
-from transformers import CLIPProcessor
+from transformers import AutoProcessor
 
 MODEL_CARD = """\
 ---
@@ -86,7 +86,7 @@ def push(
     create_repo(repo_id, token=hf_token, private=False, exist_ok=True)
 
     # Save processor config so the repo is self-contained
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    processor = AutoProcessor.from_pretrained("google/siglip2-base-patch16-224")
     processor.save_pretrained(checkpoint_dir)
 
     (Path(checkpoint_dir) / "README.md").write_text(MODEL_CARD, encoding="utf-8")

@@ -4,20 +4,21 @@ import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-from transformers import CLIPProcessor, CLIPVisionModel
+from transformers import AutoProcessor, SiglipVisionModel
 
 CACHE_PATH = "data/clip_embeddings.pt"
+# WARNING: existing data/clip_embeddings.pt cache is stale — delete and regenerate before training
 
 
 def _build_cache(csv_path: str, cache_path: str = CACHE_PATH) -> dict:
-    """Extract 768-dim CLIP pooler_output for every image and save to disk.
+    """Extract 768-dim SigLIP 2 pooler_output for every image and save to disk.
 
     Runs once. Produces ~68MB file vs ~13GB for pixel_values cache.
     """
     df = pd.read_csv(csv_path)
-    processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-    clip = CLIPVisionModel.from_pretrained(
-        "openai/clip-vit-base-patch32",
+    processor = AutoProcessor.from_pretrained("google/siglip2-base-patch16-224")
+    clip = SiglipVisionModel.from_pretrained(
+        "google/siglip2-base-patch16-224",
         use_safetensors=True,
     )
     clip.eval()

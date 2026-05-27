@@ -45,6 +45,9 @@ async def upload_creative(
     except Exception as exc:
         heatmap_result = {"heatmap_b64": "", "high_attention": [], "low_attention": [], "_heatmap_err": str(exc)}
 
+    high_attention = heatmap_result.get("high_attention", [])
+    low_attention = heatmap_result.get("low_attention", [])
+
     # 5. Persist score
     try:
         await upsert_score(
@@ -52,6 +55,8 @@ async def upload_creative(
             score_result["ctr_score"],
             score_result.get("halflife_days"),
             score_result["confidence"],
+            high_attention=high_attention,
+            low_attention=low_attention,
         )
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to persist score.")

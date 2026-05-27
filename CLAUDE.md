@@ -12,8 +12,8 @@ creative scoring layer." Mirrors Kitada et al. (2022) SOTA architecture.
 - Model serving: HF Spaces (FastAPI, 16GB RAM free tier)
 - Storage: Cloudflare R2 (uploaded creatives)
 - DB: Supabase (reuse existing free account, prefix tables with cia_)
-- Vision model: CLIP-ViT-B/32 frozen + trainable multi-task head (PyTorch)
-- Agentic layer: Qwen2.5-1.5B via smolagents + HF Inference API
+- Vision model: SigLIP 2 (google/siglip2-base-patch16-224) frozen + trainable multi-task head (PyTorch)
+- Agentic layer: Claude Haiku 4.5 via Anthropic API (native tool use)
 - Training: Hugging Face Trainer + PEFT
 
 ## Repo structure
@@ -60,12 +60,13 @@ adcreative-intel/
 ```
 
 ## Model architecture (do not change without asking)
-Input → CLIP-ViT-B/32 (FROZEN, no grad) → 768-dim embedding (pooler_output)
+Input → SigLIP 2 (google/siglip2-base-patch16-224, FROZEN, no grad) → 768-dim embedding (pooler_output)
 → Projection (768→256, ReLU, Dropout 0.2)
 → CTR head (256→1, Sigmoid) + Fatigue head (256→2, Weibull params)
 Loss = 0.5 * BCELoss(ctr) + 0.5 * WeibullNLLLoss(fatigue)
 Fatigue labels are right-censored (ad still running = censored=True)
 Weibull clamp: log inputs clamped to [-10, 10] — never remove this
+Backbone attribute: self.backbone (was self.clip — never revert)
 
 ## Research-validated design decisions (from Kitada 2022, Chen 2025)
 - Frozen backbone: confirmed by literature for datasets <100K images
@@ -91,7 +92,7 @@ get_improvement_suggestions(image_id) → {suggestions: [str x3]}
 
 ## Supabase tables
 cia_uploads: id, created_at, r2_key, vertical, user_session
-cia_scores: upload_id (UNIQUE), ctr_score, halflife_days, confidence, scored_at
+cia_scores: upload_id (UNIQUE), ctr_score, halflife_days, confidence, heatmap_regions (jsonb), scored_at
 cia_sessions: id, created_at, messages (jsonb)
 
 ## Environment variables needed
@@ -99,21 +100,29 @@ SUPABASE_URL, SUPABASE_ANON_KEY
 R2_ACCOUNT_ID, R2_ACCESS_KEY, R2_SECRET_KEY, R2_BUCKET
 HF_SPACES_URL, HF_TOKEN, API_TOKEN
 
-## Current slice
-SLICE: 5 — Full-Stack Product
-STATUS: Code complete, zero TS errors. Ready for build + deploy.
-NEXT ACTION:
-1. cd frontend && npm run build — verify production build passes
-2. git add -A && git commit -m "Slice 5: full-stack frontend + upload endpoint"
-3. git push origin master
-4. Deploy frontend/ to Vercel — set root directory to frontend/
-5. Add to Render env vars: SUPABASE_URL, SUPABASE_ANON_KEY,
-   HF_SPACES_URL, API_TOKEN, ANTHROPIC_API_KEY
-6. Set VITE_API_URL=https://adcreative-intel.onrender.com in Vercel
-   environment variables
-7. Test full flow: demo creative loads → scores show → chat works
+## Deployments
+- Frontend: https://adcreative-intel.vercel.app (live, Vercel)
+- Backend: https://adcreative-intel.onrender.com (live, Render)
 
-MODEL: model/best_alpha/ — Spearman r=0.2542, ALPHA=0.9
+## Current slice
+SLICE: 6 — Launch
+STATUS: Pending
+
+NEXT ACTIONS:
+1. README — project overview, architecture diagram, demo GIF
+2. Demo video
+3. LinkedIn post
+4. Pitch email to Moloco
+
+## Open bugs
+1. Blank trace steps for uploaded images in chat UI (low priority)
+
+## Pending
+- Stress test suite: tests/test_suite.py not yet written
+- Embedding cache stale: data/clip_embeddings.pt built with CLIP — delete and regenerate with SigLIP 2 before next training run
+- Render env var: set ALLOWED_ORIGINS=https://adcreative-intel.vercel.app,http://localhost:5173 in Render dashboard
+
+MODEL: model_siglip2_best.pt — Spearman r=0.645 (SigLIP 2, epoch 18/30)
 HF HUB: https://huggingface.co/pcr12/creative-intelligence-scorer
 
 COMPLETED:
@@ -122,18 +131,20 @@ COMPLETED:
 - Slice 3 files written: spaces/, api/hf_client.py,
   api/db.py, .github/workflows/keepalive.yml
 - Slice 4: agentic layer — tools, ReAct loop, chat endpoint, traceStore
-- Slice 5 code complete:
-  - Pre-work: 3 demo images copied to frontend/public/demo/
-  - frontend/vercel.json (SPA rewrite)
-  - Vite+React+TS scaffolded, zustand installed, styles.css imported
-  - frontend/src/lib/errors.ts, imageUtils.ts, api.ts
-  - frontend/src/store/appStore.ts
-  - frontend/src/components/icons.tsx, HealthBanner.tsx
-  - frontend/src/App.tsx (hash router)
-  - frontend/src/pages/Landing.tsx, Analyzer.tsx, Benchmark.tsx
-  - frontend/.env (VITE_API_URL=https://adcreative-intel.onrender.com)
-  - api/routes/upload.py (Supabase Storage)
-  - api/main.py updated with upload router
+- Slice 5: full-stack product — COMPLETE and deployed
+  - Frontend: React+TS+Tailwind, hash router, zustand store
+  - Pages: Landing, Analyzer, Benchmark
+  - Upload endpoint, Supabase Storage, R2 integration
+  - Demo images live at frontend/public/demo/
+- Architecture audit: all HIGH/MEDIUM issues resolved
+  - TRACE_LOG race condition fixed (request-local trace list)
+  - heatmap_regions now saved to cia_scores on every upload
+  - Persistent httpx.AsyncClient (no per-request open/close)
+  - Single Anthropic client in tools.py (_get_client())
+  - Supabase singleton double-init guarded with threading.Lock
+  - CORS origins from env var ALLOWED_ORIGINS
+  - tenacity retry only on 5xx (not 4xx)
+- SigLIP 2 swap: spaces/, model/, frontend/ all updated to google/siglip2-base-patch16-224
 
 ## Apify data status
 - Run 1 complete: 589 ads, gaming/local mix, NO start/stop dates (active_status=active)
@@ -142,7 +153,7 @@ COMPLETED:
   https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&q=KEYWORD&search_type=keyword_unordered
 
 ## Hard constraints
-- CLIP backbone ALWAYS frozen — never set requires_grad=True on it
+- SigLIP 2 backbone ALWAYS frozen — never set requires_grad=True on self.backbone
 - clip_head.py and survival.py written by YOU, never ML Intern
 - Never store image pixel data in Supabase — R2 only
 - All scores stored in cia_scores, never recomputed on the fly
