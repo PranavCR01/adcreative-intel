@@ -2,15 +2,15 @@ import os
 
 import torch
 from huggingface_hub import hf_hub_download
-from transformers import CLIPProcessor
+from transformers import AutoProcessor
 
 from clip_head import CreativeScorer
 
 _model: CreativeScorer | None = None
-_processor: CLIPProcessor | None = None
+_processor: AutoProcessor | None = None
 
 
-def get_model() -> tuple[CreativeScorer, CLIPProcessor]:
+def get_model() -> tuple[CreativeScorer, AutoProcessor]:
     global _model, _processor
     if _model is None:
         try:
@@ -19,7 +19,7 @@ def get_model() -> tuple[CreativeScorer, CLIPProcessor]:
 
             print(f"[model_loader] Loading from repo: {hf_repo}", flush=True)
 
-            _processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+            _processor = AutoProcessor.from_pretrained("google/siglip2-base-patch16-224")
             print("[model_loader] Processor loaded", flush=True)
 
             _model = CreativeScorer()

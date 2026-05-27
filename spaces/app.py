@@ -125,7 +125,7 @@ async def score(
         pixel_values = inputs["pixel_values"]  # (1, 3, 224, 224), CPU
 
         with torch.no_grad():
-            clip_out = model.clip(pixel_values=pixel_values)
+            clip_out = model.backbone(pixel_values=pixel_values)
             embedding = clip_out.pooler_output  # (1, 768)
             outputs = model(embedding=embedding)
 

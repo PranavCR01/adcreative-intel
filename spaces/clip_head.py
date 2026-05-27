@@ -1,21 +1,21 @@
 import torch
 import torch.nn as nn
-from transformers import CLIPVisionModel
+from transformers import SiglipVisionModel
 
 
 class CreativeScorer(nn.Module):
     def __init__(self):
         super().__init__()
-        # Frozen CLIP backbone — NEVER set requires_grad=True on these params
-        self.clip = CLIPVisionModel.from_pretrained(
-            "openai/clip-vit-base-patch32",
+        # Frozen SigLIP 2 backbone — NEVER set requires_grad=True on these params
+        self.backbone = SiglipVisionModel.from_pretrained(
+            "google/siglip2-base-patch16-224",
             use_safetensors=True,
         )
-        for param in self.clip.parameters():
+        for param in self.backbone.parameters():
             param.requires_grad = False
 
         # Fail fast if backbone accidentally gets unfrozen anywhere downstream
-        assert not any(p.requires_grad for p in self.clip.parameters())
+        assert not any(p.requires_grad for p in self.backbone.parameters())
 
         # Trainable head only
         self.projection = nn.Sequential(

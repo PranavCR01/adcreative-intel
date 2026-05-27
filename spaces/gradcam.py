@@ -5,14 +5,14 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image
-from transformers import CLIPProcessor
+from transformers import AutoProcessor
 
 from clip_head import CreativeScorer
 
 
 def _compute_cam(
     model: CreativeScorer,
-    processor: CLIPProcessor,
+    processor: AutoProcessor,
     image: Image.Image,
     device: str,
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -72,7 +72,7 @@ def _compute_cam(
 
 def generate_heatmap(
     model: CreativeScorer,
-    processor: CLIPProcessor,
+    processor: AutoProcessor,
     image: Image.Image,
     device: str = "cpu",
 ) -> np.ndarray:
@@ -83,7 +83,7 @@ def generate_heatmap(
 
 def generate_heatmap_with_cam(
     model: CreativeScorer,
-    processor: CLIPProcessor,
+    processor: AutoProcessor,
     image: Image.Image,
     device: str = "cpu",
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -93,7 +93,7 @@ def generate_heatmap_with_cam(
 
 def save_heatmaps(
     model: CreativeScorer,
-    processor: CLIPProcessor,
+    processor: AutoProcessor,
     image_paths: List[str],
     output_dir: str,
     device: str = "cpu",
