@@ -36,58 +36,22 @@ const VERTICAL_MEDIANS: Record<string, number> = {
   other:     0.118,
 }
 
-const DEMOS: Record<string, Demo> = {
-  gaming: {
-    ad_id: 'apify_f321af3f4e59',
-    label: 'Gaming · Mobile RPG',
-    ctr: 0.3179, halflife: 33.04, confidence: 0.3641, dtype: 'wear-out',
-    imageSrc: '/demo/gaming-ad.jpg',
-    benchmark: { ctr: { median: 0.119, max: 0.80 }, halflife: { median: 10.7, max: 60 } },
-    initial: {
-      summary: 'This creative scores **above median for Gaming (CTR 0.32 vs 0.12 median)**, and the model predicts a **wear-out** fatigue pattern: half-life of 33.0 days — well above the vertical median of 10.7d. High confidence (0.36) on a real scraped ad. The driver is strong visual saliency concentrated on the central focal region.',
-      trace: [
-        { tool: 'get_creative_score',        dur: 142, out: 'ctr_score=0.3179, halflife_days=33.04, conf=0.3641' },
-        { tool: 'get_heatmap_regions',        dur: 208, out: "high=['center_burst','cta_button'], low=['top_strip','margins']" },
-        { tool: 'get_benchmark',              dur:  91, out: 'vertical=gaming, n=7485, median_ctr=0.119, median_hl=10.7d' },
-        { tool: 'get_improvement_suggestions',dur: 318, out: "['add_face','reduce_saturation_band','multi_panel_variant']" },
-      ],
-    },
-    suggestions: ['Why is the half-life so long?', 'How does this compare to gaming median?', 'What should I try next?'],
+const DEFAULT_DEMO: Demo = {
+  ad_id: 'apify_f321af3f4e59',
+  label: 'Gaming · Mobile RPG',
+  ctr: 0.3179, halflife: 33.04, confidence: 0.3641, dtype: 'wear-out',
+  imageSrc: '/demo/gaming-ad.jpg',
+  benchmark: { ctr: { median: 0.119, max: 0.80 }, halflife: { median: 10.7, max: 60 } },
+  initial: {
+    summary: 'This creative scores **above median for Gaming (CTR 0.32 vs 0.12 median)**, and the model predicts a **wear-out** fatigue pattern: half-life of 33.0 days — well above the vertical median of 10.7d. High confidence (0.36) on a real scraped ad. The driver is strong visual saliency concentrated on the central focal region.',
+    trace: [
+      { tool: 'get_creative_score',        dur: 142, out: 'ctr_score=0.3179, halflife_days=33.04, conf=0.3641' },
+      { tool: 'get_heatmap_regions',        dur: 208, out: "high=['center_burst','cta_button'], low=['top_strip','margins']" },
+      { tool: 'get_benchmark',              dur:  91, out: 'vertical=gaming, n=7485, median_ctr=0.119, median_hl=10.7d' },
+      { tool: 'get_improvement_suggestions',dur: 318, out: "['add_face','reduce_saturation_band','multi_panel_variant']" },
+    ],
   },
-  ecommerce: {
-    ad_id: 'apify_6d945f5a1b9d',
-    label: 'Ecommerce · DTC',
-    ctr: 0.5063, halflife: 47.99, confidence: 0.0126, dtype: 'wear-out',
-    imageSrc: '/demo/ecommerce-ad.jpg',
-    benchmark: { ctr: { median: 0.125, max: 0.80 }, halflife: { median: 11.2, max: 60 } },
-    initial: {
-      summary: 'Predicted CTR 0.51 is **well above the ecommerce median of 0.12**, and half-life of 48.0d is strong. **Note: confidence is very low (0.01)** — the model is uncertain on this creative. Treat these scores as a rough signal only. The low confidence flag triggers when the embedding is far from the training distribution.',
-      trace: [
-        { tool: 'get_creative_score',        dur: 134, out: 'ctr_score=0.5063, halflife_days=47.99, conf=0.0126 ⚠ LOW' },
-        { tool: 'get_heatmap_regions',        dur: 196, out: "high=['headline_strip'], low=['product','cta']" },
-        { tool: 'get_benchmark',              dur:  88, out: 'vertical=ecommerce, n=7078, median_ctr=0.125, median_hl=11.2d' },
-        { tool: 'get_improvement_suggestions',dur: 287, out: "['enlarge_product','increase_product_contrast','lifestyle_context']" },
-      ],
-    },
-    suggestions: ['Why is confidence so low?', 'Which region should I fix first?', 'Show me a version that fixes this'],
-  },
-  finance: {
-    ad_id: 'synthetic_591690dcf2f2',
-    label: 'Finance · Neobank',
-    ctr: 0.0993, halflife: 12.0, confidence: 0.8014, dtype: 'wear-out',
-    imageSrc: '/demo/finance-ad.jpg',
-    benchmark: { ctr: { median: 0.111, max: 0.80 }, halflife: { median: 10.0, max: 60 } },
-    initial: {
-      summary: 'Finance is a slow-CTR vertical. **Predicted CTR 0.10 is near the 0.11 median**, but half-life looks healthy at 12.0d (above the 10.0d median) — the creative is durable. High confidence (0.80) on this synthetic creative. Heatmap concentrates on the APY figure, which is correct behavior for a neobank ad.',
-      trace: [
-        { tool: 'get_creative_score',        dur: 156, out: 'ctr_score=0.0993, halflife_days=12.00, conf=0.8014' },
-        { tool: 'get_heatmap_regions',        dur: 214, out: "high=['apy_number'], low=['legal_disclosure','footer']" },
-        { tool: 'get_benchmark',              dur:  92, out: 'vertical=finance, n=6520, median_ctr=0.111, median_hl=10.0d' },
-        { tool: 'get_improvement_suggestions',dur: 301, out: "['shrink_legal','add_trust_glyph','urgency_microcopy']" },
-      ],
-    },
-    suggestions: ['Why is half-life higher than ecommerce?', 'Is the legal copy hurting me?', 'Suggest a variant with a face'],
-  },
+  suggestions: ['Why is the half-life so long?', 'How does this compare to gaming median?', 'What should I try next?'],
 }
 
 function pct(v: number, max: number) {
@@ -109,7 +73,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
   const { isScoring, setIsScoring, setScore, setUploadId, score, uploadId } = useAppStore()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const demo = DEMOS[vertical]
+  const demo = DEFAULT_DEMO
   // For demo mode use the demo object's scores; for upload use store score
   const displayCtr       = score && uploadId ? score.ctr_score   : demo.ctr
   const displayHalflife  = score && uploadId ? score.halflife_days : demo.halflife
@@ -128,10 +92,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
       useAppStore.getState().setImageUrl(URL.createObjectURL(file))
       if (result.heatmap_b64) useAppStore.getState().setHeatmap(result.heatmap_b64)
       if (result.predicted_vertical) {
-        const validVerticals = Object.keys(DEMOS)  // ['gaming', 'ecommerce', 'finance']
-        if (validVerticals.includes(result.predicted_vertical)) {
-          setVertical(result.predicted_vertical)
-        }
+        setVertical(result.predicted_vertical)
         setDetectedVertical(result.predicted_vertical)
         setDetectedConfidence(result.vertical_confidence ?? 0)
       }
@@ -165,20 +126,12 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
           </span>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <span className="muted" style={{ fontSize: 12.5 }}>Demo:</span>
-          <div className="select">
-            <select value={vertical} onChange={(e) => { setVertical(e.target.value); setDetectedVertical(null); setDetectedConfidence(0); useAppStore.getState().reset(); setChatKey(k => k + 1) }}>
-              <option value="gaming">Gaming · Mobile RPG</option>
-              <option value="ecommerce">Ecommerce · DTC</option>
-              <option value="finance">Finance · Neobank</option>
-            </select>
-          </div>
           {detectedVertical && (
             <span className="chip indigo" style={{ fontSize: 11 }}>
               Auto-detected: {detectedVertical.charAt(0).toUpperCase() + detectedVertical.slice(1)} ({Math.round(detectedConfidence * 100)}%)
             </span>
           )}
-          <button className="btn btn-sm" onClick={() => { setIsResetting(true); setHeat(false); setDetectedVertical(null); setDetectedConfidence(0); useAppStore.getState().reset(); setIsResetting(false) }}>
+          <button className="btn btn-sm" onClick={() => { setIsResetting(true); setVertical('gaming'); setHeat(false); setDetectedVertical(null); setDetectedConfidence(0); useAppStore.getState().reset(); setIsResetting(false) }}>
             <span className={isResetting ? 'spin' : ''}><IconSparkle size={12} /></span> Reset
           </button>
         </div>
@@ -188,7 +141,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
         <div className="card creative-card">
           <div className="card-header">
             <div className="card-title">
-              Creative <span className="kbd">{vertical}_demo.jpg</span>
+              Creative
             </div>
             <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>224×224 · JPEG</span>
           </div>
@@ -541,7 +494,7 @@ function ChatPanel({ demo, imageId, vertical, isDemo }: { demo: Demo; imageId: s
     <div className="card chat">
       <div className="card-header">
         <div className="card-title">
-          <span className={busy ? 'spin' : ''}><IconSparkle size={12} /></span> Explanation Agent
+          <span className={busy ? 'spin' : ''} style={{ color: 'var(--violet)' }}><IconSparkle size={12} /></span> Explanation Agent
           <span className="kbd">claude-haiku-4-5</span>
         </div>
         <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>5 tools loaded</span>
