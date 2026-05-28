@@ -60,11 +60,12 @@ TOOL_SCHEMAS = [
 ]
 
 
-def run_agent(image_id: str, user_message: str) -> dict:
+def run_agent(image_id: str, user_message: str, vertical: str = "other") -> dict:
     trace: list[dict] = []
-    messages = [{"role": "user", "content": f"[Creative ID: {image_id}]\n\n{user_message}"}]
+    messages = [{"role": "user", "content": f"[Creative ID: {image_id}] [Vertical: {vertical}]\n\n{user_message}"}]
     try:
         for _ in range(5):      # max_steps=5 — hard cap prevents infinite loops
+            print(f"[agent] turn={_} messages={json.dumps(messages[-2:], default=str, indent=2)}", flush=True)
             resp = _get_client().messages.create(
                 model="claude-haiku-4-5",
                 max_tokens=1024,
@@ -85,6 +86,7 @@ def run_agent(image_id: str, user_message: str) -> dict:
                     continue
                 fn = TOOL_MAP.get(block.name)
                 result = fn(**block.input, trace=trace) if fn else {"error": f"Unknown tool: {block.name}"}
+                print(f"[agent] tool={block.name} input={block.input} result={result}", flush=True)
                 tool_results.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,

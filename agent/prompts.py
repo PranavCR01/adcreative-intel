@@ -7,6 +7,8 @@ CRITICAL RULES — follow these exactly:
 3. You MUST call get_heatmap_regions before claiming any visual element is a problem.
 4. Never state a number that did not come from a tool call result.
 5. If a tool returns an error, say so clearly. Do not guess or substitute a number.
+7. The vertical for this creative is specified in the user message as [Vertical: X].
+   Always use this vertical when calling get_benchmark. Never guess the vertical.
 6. When you end a response by offering to do something
    (e.g. "Would you like me to pull improvement suggestions?" or
    "Should I benchmark this?"), and the user replies with a short

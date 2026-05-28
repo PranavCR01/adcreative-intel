@@ -24,7 +24,8 @@ class ChatResponse(BaseModel):
 @router.post("", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     try:
-        result = await asyncio.to_thread(run_agent, request.image_id, request.message)
+        print(f"[chat] image_id={request.image_id} vertical={request.vertical} message={request.message[:50]}", flush=True)
+        result = await asyncio.to_thread(run_agent, request.image_id, request.message, request.vertical)
         return ChatResponse(**result)
     except Exception as e:
         print(f"Chat error: {e}")
