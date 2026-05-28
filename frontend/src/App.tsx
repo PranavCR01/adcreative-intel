@@ -41,7 +41,7 @@ function Nav({ route, navigate }: { route: string; navigate: (p: string) => void
     }>
       <div className="nav-left">
         <div className="brand" onClick={() => navigate('/')}>
-          <div className="brand-mark"></div>
+          <img src="/favicon.svg" style={{ width: 24, height: 24, verticalAlign: 'middle', marginRight: 2 }} alt="" />
           <span className="brand-text">
             Creative Intelligence Agent <span className="tag mono">v1</span>
           </span>

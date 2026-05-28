@@ -8,6 +8,7 @@ export default function Landing({ navigate }: { navigate: (p: string) => void })
     <>
       <Hero navigate={navigate} />
       <ProblemSection />
+      <WasteSection />
       <HowItWorks />
       <Architecture />
       <Stats />
@@ -44,7 +45,7 @@ function Hero({ navigate }: { navigate: (p: string) => void }) {
             </button>
           </div>
           <div className="hero-meta">
-            <span><span className="dot"></span>CLIP-ViT-B/32 backbone</span>
+            <span><span className="dot"></span>SigLIP 2 backbone</span>
             <span><span className="dot"></span>Weibull survival head</span>
             <span><span className="dot"></span>Trained on 22,248 ads</span>
           </div>
@@ -60,7 +61,7 @@ function HeroViz() {
   return (
     <div className="hero-viz">
       <div className="hero-viz-head">
-        <span>creative_score_v1.ckpt</span>
+        <span>siglip2_scorer_v1.ckpt</span>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span className="status-dot"></span> live
         </span>
@@ -140,10 +141,49 @@ function ProblemSection() {
   )
 }
 
+function WasteSection() {
+  const cards = [
+    { vertical: 'Gaming',    pct: '62.5%' },
+    { vertical: 'Ecommerce', pct: '66.7%' },
+    { vertical: 'Finance',   pct: '53.8%' },
+  ]
+  return (
+    <section className="section">
+      <div className="section-inner">
+        <div className="section-head">
+          <span className="eyebrow"><span className="bullet"></span>The cost of bad creative</span>
+          <h2 className="h2">Bottom-quartile ads waste 54–67% of daily budget.</h2>
+          <p style={{ color: 'var(--text-3)', fontSize: 16, margin: 0, lineHeight: 1.6 }}>
+            Measured across 2,542 real Meta Ad Library creatives, stratified by vertical.
+          </p>
+        </div>
+        <div className="three-col" style={{ marginTop: 32 }}>
+          {cards.map((c) => (
+            <div key={c.vertical} style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 12, padding: '24px 28px',
+            }}>
+              <div className="stat-val" style={{ color: 'var(--violet)' }}>{c.pct}</div>
+              <div className="stat-lbl">{c.vertical}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
+                budget wasted vs median · bottom quartile
+              </div>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 20, lineHeight: 1.6 }}>
+          At $100/day spend, a bottom-quartile gaming creative wastes ~$62/day vs a median
+          performer. CIA identifies this gap in under 10 seconds for &lt; $0.01.
+        </p>
+      </div>
+    </section>
+  )
+}
+
 function HowItWorks() {
   const steps = [
     { n: 'Step 01', h: 'Upload', p: 'Drop a static image creative — gaming, ecommerce, or finance vertical. PNG or JPEG, up to 8MB.', v: '→ POST /upload · ~120ms' },
-    { n: 'Step 02', h: 'Score', p: 'CLIP-ViT extracts a 768-dim embedding. A multi-task head returns a CTR estimate and a Weibull half-life distribution.', v: '→ ctr_score · halflife_days · confidence' },
+    { n: 'Step 02', h: 'Score', p: 'SigLIP 2 extracts a 768-dim embedding. A multi-task head returns a CTR estimate and a Weibull half-life distribution.', v: '→ ctr_score · halflife_days · confidence' },
     { n: 'Step 03', h: 'Explain', p: 'An agent calls Grad-CAM, benchmark, and improvement tools to ground the score in the regions of the image that drove it.', v: '→ agent.run() · 4 tools · streaming' },
   ]
   return (
@@ -178,13 +218,13 @@ function Architecture() {
           <p style={{ color: 'var(--text-3)', fontSize: 16, margin: 0, lineHeight: 1.6 }}>
             Literature is clear on datasets under 100K images: freeze the backbone, train a
             light head, and let the agent earn its keep on the explanation layer — not on
-            re-discovering CLIP.
+            re-discovering SigLIP 2.
           </p>
         </div>
         <div className="arch">
           <div className="arch-arrows"></div>
           <div className="arch-node"><div className="lbl">Input</div><div className="name">Creative</div><div className="desc">PNG · 4:5 · ≤8MB</div></div>
-          <div className="arch-node"><div className="lbl">Vision</div><div className="name">CLIP-ViT-B/32</div><div className="desc">frozen · 768-d emb</div></div>
+          <div className="arch-node"><div className="lbl">Vision</div><div className="name">SigLIP 2</div><div className="desc">frozen · 768-d emb</div></div>
           <div className="arch-node accent"><div className="lbl">Head</div><div className="name">Multi-task MLP</div><div className="desc">CTR + Weibull(α, β)</div></div>
           <div className="arch-node"><div className="lbl">Agent</div><div className="name">Claude Haiku · ReAct agent</div><div className="desc">4 tools · streaming</div></div>
         </div>
@@ -203,6 +243,7 @@ function Architecture() {
               <div><span style={{ color: 'var(--indigo-2)' }}>get_creative_score</span>(image_id)</div>
               <div><span style={{ color: 'var(--indigo-2)' }}>get_heatmap_regions</span>(image_id)</div>
               <div><span style={{ color: 'var(--indigo-2)' }}>get_benchmark</span>(vertical)</div>
+              <div><span style={{ color: 'var(--indigo-2)' }}>get_fatigue_projection</span>(halflife_days)</div>
               <div><span style={{ color: 'var(--indigo-2)' }}>get_improvement_suggestions</span>(image_id)</div>
             </div>
           </div>
@@ -216,7 +257,7 @@ function Stats() {
   const items = [
     { v: '22,248', l: 'training creatives' },
     { v: '3', l: 'verticals · gaming · ecom · finance' },
-    { v: '0.254', l: 'Spearman r (test set)' },
+    { v: '0.645', l: 'Spearman r · real-only test set' },
     { v: 'Weibull', l: 'right-censored survival' },
   ]
   return (
@@ -247,6 +288,8 @@ function Footer() {
         <a href="#"><IconLinkedin size={14} /> &nbsp;LinkedIn</a>
         <a href="#"><IconGithub size={14} /> &nbsp;GitHub</a>
         <a href="#"><IconUser size={14} /> &nbsp;Portfolio</a>
+        <a href="#">Research notes</a>
+        <a href="#">Dev journal</a>
       </div>
       <div className="footer-meta">© 2026 · pcr12 · built on Hugging Face</div>
     </footer>
