@@ -125,6 +125,7 @@ NEXT ACTIONS:
 
 ## Open bugs
 1. Blank trace steps for uploaded images in chat UI (low priority)
+2. "4 tools loaded" label in Msg meta still hardcoded (line ~493) — cosmetic only
 
 ## Pending
 - Stress test suite: tests/test_suite.py written — not yet run against live services
@@ -158,10 +159,27 @@ COMPLETED:
   - Feature 1: Vertical classifier — LogisticRegression on SigLIP 2 embeddings, 79.7% CV acc
     pkl on HF Hub; /score returns predicted_vertical + vertical_confidence
     Frontend auto-selects + shows badge; clears on reset or manual override
+    Guard: only setVertical if key exists in DEMOS (prevents "other" crash)
   - Feature 2: Confidence-aware agent — CONFIDENCE CALIBRATION block in system prompt
     LOW (<0.15): flags explicitly; MODERATE (0.15-0.40): hedged; HIGH (>0.40): authoritative
   - Feature 3: Fatigue projection tool — get_fatigue_projection(halflife_days)
     Weibull retention at day 7/14/21, shape=1.5; recommendation string
+- Agent hardening (post-5a):
+  - Conversation memory: history[] passed frontend→chat.py→run_agent; [Creative ID]/[Vertical]
+    injected on turn 1 only; reminder exchange prepended on follow-up turns
+  - Vertical drop fixed: chat.py now passes request.vertical to run_agent
+  - Prompt rules 6-8: affirmative execution (no re-ask), no tool re-runs, no markdown,
+    vertical from [Vertical: X] tag (rule 7)
+  - Structured logging: [chat], [agent] turn/tool/result, [clf] proba
+  - get_improvement_suggestions: backtick fence stripping + strengthened prompt
+- Budget Impact card (Analyzer.tsx):
+  - Pure frontend math, upload-only (score && uploadId guard)
+  - Editable daily budget input, defaults $100
+  - daily_waste = ((median_ctr - ctr) / median_ctr) * budget (0 if above median)
+  - total_waste = daily_waste * halflife_days
+  - optimal_rotation = halflife * (-ln(0.5))^(1/1.5) — Weibull t=0.5 crossing
+  - VERTICAL_MEDIANS from real dataset: gaming=0.089, ecommerce=0.233, finance=0.144, other=0.118
+  - Above-median path shows green "strong performer" message
 
 ## Apify data status
 - Run 1 complete: 589 ads, gaming/local mix, NO start/stop dates (active_status=active)
