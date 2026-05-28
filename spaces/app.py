@@ -160,6 +160,7 @@ async def score(
             emb_np              = embedding.detach().numpy()   # (1, 768)
             predicted_vertical  = str(clf.predict(emb_np)[0])
             proba               = clf.predict_proba(emb_np)[0]
+            print(f"[clf] proba={proba} predicted={predicted_vertical} conf={proba.max()}", flush=True)
             vertical_confidence = round(float(proba.max()), 2)
         else:
             predicted_vertical  = vertical or "other"
