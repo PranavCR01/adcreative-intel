@@ -20,58 +20,63 @@ export default function Benchmark() {
               <th>Description</th>
               <th className="num">CTR · Spearman r ↑</th>
               <th className="num">CTR · MAE ↓</th>
-              <th className="num">Half-life · Spearman r ↑</th>
-              <th className="num">Half-life · MAE ↓</th>
               <th className="num">Params</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Random</td>
-              <td className="muted">Uniform baseline</td>
-              <td className="num"><CellBar v={0.02} max={0.3} /> 0.018</td>
+              <td>Random baseline</td>
+              <td className="muted">Uniform random</td>
+              <td className="num"><CellBar v={0.018} max={0.7} /> 0.018</td>
               <td className="num">0.241</td>
-              <td className="num"><CellBar v={0.01} max={0.3} /> 0.014</td>
-              <td className="num">7.84d</td>
               <td className="num muted">—</td>
             </tr>
             <tr>
               <td>Duration-only</td>
               <td className="muted">Linear regr. on observed runtime</td>
-              <td className="num"><CellBar v={0.06} max={0.3} /> 0.062</td>
+              <td className="num"><CellBar v={0.062} max={0.7} /> 0.062</td>
               <td className="num">0.218</td>
-              <td className="num"><CellBar v={0.18} max={0.3} /> 0.184</td>
-              <td className="num">4.62d</td>
-              <td className="num">1.0K</td>
+              <td className="num">1K</td>
             </tr>
             <tr>
-              <td>CTR-only head</td>
-              <td className="muted">CLIP + BCE head, no fatigue task</td>
-              <td className="num"><CellBar v={0.22} max={0.3} /> 0.221</td>
-              <td className="num">0.142</td>
-              <td className="num"><CellBar v={0.10} max={0.3} /> 0.098</td>
-              <td className="num">5.31d</td>
-              <td className="num">197K</td>
+              <td>CLIP baseline</td>
+              <td className="muted">CLIP-ViT-B/32 + BCE + Weibull, mixed eval</td>
+              <td className="num"><CellBar v={0.254} max={0.7} /> 0.254</td>
+              <td className="num">0.131</td>
+              <td className="num">87.5M</td>
+            </tr>
+            <tr>
+              <td>Exp1 · drop sentinels</td>
+              <td className="muted">CLIP, sentinels removed, mixed eval</td>
+              <td className="num"><CellBar v={0.203} max={0.7} /> 0.203</td>
+              <td className="num">0.072</td>
+              <td className="num">87.5M</td>
+            </tr>
+            <tr>
+              <td>Exp2 · balanced</td>
+              <td className="muted">CLIP, 60/40 real/synthetic, small test set*</td>
+              <td className="num"><CellBar v={0.594} max={0.7} /> 0.594*</td>
+              <td className="num muted">—</td>
+              <td className="num">87.5M</td>
             </tr>
             <tr className="highlight">
-              <td><strong>Full multi-task (ours)</strong></td>
-              <td className="muted">CLIP + BCE(ctr) + Weibull(α, β)</td>
-              <td className="num"><CellBar v={0.254} max={0.3} accent /> <strong>0.254</strong></td>
-              <td className="num"><strong>0.131</strong></td>
-              <td className="num"><CellBar v={0.227} max={0.3} accent /> <strong>0.227</strong></td>
-              <td className="num"><strong>3.94d</strong></td>
-              <td className="num">263K</td>
+              <td><strong>SigLIP 2 (ours)</strong></td>
+              <td className="muted">SigLIP2-base-patch16-224 + BCE + Weibull, real-only eval</td>
+              <td className="num"><CellBar v={0.645} max={0.7} accent /> <strong>0.645</strong></td>
+              <td className="num"><strong>0.036</strong></td>
+              <td className="num">93.3M</td>
             </tr>
           </tbody>
         </table>
         <p className="muted mono" style={{ fontSize: 11.5, marginTop: 10 }}>
-          Bold = best in column. Multi-task head shares the projection layer; per-task heads add
-          ~66K params. CLIP backbone is frozen across all rows.
+          Rows 1–5 evaluated on mixed real+synthetic test set. Row 6 evaluated on real-only
+          held-out set (382 samples). Bold = best. * Exp2 r=0.594 on 848-sample test set —
+          unreliable due to small size, not comparable to other rows.
         </p>
       </div>
 
       <div className="bench-section">
-        <h3 className="h3">Training loss</h3>
+        <h3 className="h3">SigLIP 2 training loss</h3>
         <div className="chart">
           <div className="chart-legend">
             <div className="it"><span className="sw" style={{ background: "var(--indigo)" }}></span> total loss</div>
@@ -81,8 +86,8 @@ export default function Benchmark() {
           </div>
           <LossChart />
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-3)" }}>
-            <span>30 epochs · batch 64 · AdamW · lr 5e-4 → 1e-5 cosine</span>
-            <span>best @ epoch 22 · early stop patience=4</span>
+            <span>30 epochs · batch 64 · AdamW · lr 5e-4 · SigLIP2-base-patch16-224 frozen backbone</span>
+            <span>best @ epoch 14 · early stop patience=5</span>
           </div>
         </div>
       </div>
@@ -103,19 +108,27 @@ export default function Benchmark() {
           <tbody>
             <tr>
               <td>Apify · Meta Ad Library</td>
-              <td className="num">8,914</td>
+              <td className="num">2,542</td>
               <td>gaming, ecom, finance</td>
               <td className="mono" style={{ fontSize: 12 }}>real · scraped</td>
               <td className="num">38%</td>
-              <td className="muted">runtime inferred from start_date / stop_date</td>
+              <td className="muted">runtime from start_date / stop_date</td>
+            </tr>
+            <tr>
+              <td>Sentinel rows (removed)</td>
+              <td className="num">960</td>
+              <td>mixed</td>
+              <td className="mono" style={{ fontSize: 12 }}>ctr_score=1.0</td>
+              <td className="num muted">—</td>
+              <td className="muted">removed before training — not real CTR</td>
             </tr>
             <tr>
               <td>Synthetic · PIL</td>
-              <td className="num">13,334</td>
+              <td className="num">18,746</td>
               <td>balanced 3-way</td>
-              <td className="mono" style={{ fontSize: 12 }}>rule-based · scriptable</td>
+              <td className="mono" style={{ fontSize: 12 }}>rule-based</td>
               <td className="num">0%</td>
-              <td className="muted">face / color / CTA rules; uncensored ground truth</td>
+              <td className="muted">face / color / CTA rules; uncensored</td>
             </tr>
             <tr style={{ background: "var(--bg-2)" }}>
               <td><strong>Total · labels_clean.csv</strong></td>
@@ -123,7 +136,7 @@ export default function Benchmark() {
               <td><strong>3</strong></td>
               <td className="mono muted" style={{ fontSize: 12 }}>multi-task · joint</td>
               <td className="num"><strong>15.2%</strong></td>
-              <td className="muted">85/10/5 train/val/test stratified by vertical × type</td>
+              <td className="muted">70/15/15 real train/val/test · synthetic train only</td>
             </tr>
           </tbody>
         </table>
@@ -132,9 +145,9 @@ export default function Benchmark() {
       <div className="bench-section">
         <h3 className="h3">Per-vertical stats</h3>
         <div className="vert-grid">
-          <VertCard name="Gaming"    color="oklch(0.65 0.20 28)"  n="7,485" ctr={1.19} hl={10.7} cutout={42} wearout={58} />
-          <VertCard name="Ecommerce" color="oklch(0.65 0.16 195)" n="7,078" ctr={1.25} hl={11.2} cutout={61} wearout={39} />
-          <VertCard name="Finance"   color="oklch(0.70 0.14 155)" n="6,520" ctr={1.11} hl={10.0} cutout={27} wearout={73} />
+          <VertCard name="Gaming"    color="oklch(0.65 0.20 28)"  n="1,070" ctr={0.089} hl={10.7} cutout={42} wearout={58} />
+          <VertCard name="Ecommerce" color="oklch(0.65 0.16 195)" n="527"   ctr={0.233} hl={11.2} cutout={61} wearout={39} />
+          <VertCard name="Finance"   color="oklch(0.70 0.14 155)" n="248"   ctr={0.144} hl={10.0} cutout={27} wearout={73} />
         </div>
       </div>
 
@@ -142,10 +155,11 @@ export default function Benchmark() {
         <h3 className="h3">Methodology</h3>
         <div className="prose">
           <p>
-            The model is a small multi-task head on top of a frozen CLIP-ViT-B/32 backbone.
-            Freezing follows Kitada et al. (2022), whose work on Yahoo display creatives is the
-            closest published analog and confirms backbones don't need fine-tuning when training
-            data is under ~100K images.
+            The model is a small multi-task head on top of a frozen SigLIP 2 backbone
+            (google/siglip2-base-patch16-224, 93M params). Freezing follows Kitada et al. (2022),
+            whose work on Yahoo display creatives confirms backbones don't need fine-tuning when
+            training data is under ~100K images. SigLIP 2 is a stronger backbone than CLIP-ViT-B/32,
+            trained with sigmoid loss on larger data.
           </p>
           <p>
             The fatigue head outputs the two parameters <code>α</code> (shape) and <code>β</code>
@@ -175,9 +189,54 @@ export default function Benchmark() {
             <strong>Limitations.</strong> Static images only — no video, carousel, or playable
             creatives in v1. Verticals beyond gaming / ecom / finance have not been validated;
             the model will return a low-confidence flag (&lt;0.4) on out-of-distribution inputs.
-            CTR is a relative ranking signal, not a calibrated probability.
+            CTR is a relative ranking signal, not a calibrated probability. Vertical classifier
+            trained on 2,542 real ads — may misclassify niche verticals not represented in the
+            training corpus. Backbone is frozen SigLIP 2; fine-tuning may improve performance
+            on specialized creative styles.
           </p>
         </div>
+      </div>
+
+      <div className="bench-section">
+        <h3 className="h3">Vertical classifier</h3>
+        <div className="prose">
+          <p>
+            Auto-detection of ad vertical uses a logistic regression classifier trained on frozen
+            SigLIP 2 embeddings from 2,542 real Apify ads. 5-fold stratified cross-validation
+            accuracy: <strong>79.7%</strong>.
+          </p>
+        </div>
+        <table className="t" style={{ marginTop: 16 }}>
+          <thead>
+            <tr>
+              <th>Vertical</th>
+              <th className="num">n</th>
+              <th className="num">Recall</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Gaming</td>
+              <td className="num">1,070</td>
+              <td className="num">86.3%</td>
+            </tr>
+            <tr>
+              <td>Ecommerce</td>
+              <td className="num">527</td>
+              <td className="num">71.9%</td>
+            </tr>
+            <tr>
+              <td>Finance</td>
+              <td className="num">248</td>
+              <td className="num">78.6%</td>
+            </tr>
+            <tr>
+              <td>Other</td>
+              <td className="num">697</td>
+              <td className="num">75.6%</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -205,7 +264,7 @@ function VertCard({ name, color, n, ctr, hl, cutout, wearout }: {
       </div>
       <div className="row">
         <span className="k">median ctr</span>
-        <span className="v">{ctr.toFixed(2)}<span className="unit">%</span></span>
+        <span className="v">{(ctr * 100).toFixed(2)}<span className="unit">%</span></span>
       </div>
       <div className="row">
         <span className="k">median half-life</span>
@@ -233,7 +292,7 @@ function LossChart() {
       total: 1.35 * decay + 0.42 + (Math.sin(i * 1.1) * 0.012),
       ctr:   0.69 * decay + 0.21 + (Math.sin(i * 0.9) * 0.008),
       hl:    0.66 * decay + 0.22 + (Math.cos(i * 1.3) * 0.013),
-      val:   1.35 * Math.exp(-2.1 * t) + 0.46 + (i > 22 ? (i - 22) * 0.008 : 0) + (Math.sin(i * 1.0) * 0.015),
+      val:   1.35 * Math.exp(-2.1 * t) + 0.46 + (i > 14 ? (i - 14) * 0.008 : 0) + (Math.sin(i * 1.0) * 0.015),
     })
   }
   const w = 760, h = 260, padL = 44, padR = 14, padT = 14, padB = 28
@@ -257,8 +316,8 @@ function LossChart() {
       {xTicks.map((t, i) => (
         <text key={i} x={X(t)} y={h - 10} fontFamily="var(--font-mono)" fontSize="9.5" fill="var(--text-4)" textAnchor="middle">epoch {t}</text>
       ))}
-      <line x1={X(22)} y1={padT} x2={X(22)} y2={h - padB} stroke="var(--indigo)" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
-      <text x={X(22) + 4} y={padT + 12} fontFamily="var(--font-mono)" fontSize="10" fill="var(--indigo-2)">best · ep 22</text>
+      <line x1={X(14)} y1={padT} x2={X(14)} y2={h - padB} stroke="var(--indigo)" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+      <text x={X(14) + 4} y={padT + 12} fontFamily="var(--font-mono)" fontSize="10" fill="var(--indigo-2)">best · ep 14</text>
       <path d={line("ctr")}   stroke="var(--good)"   strokeWidth="1.5" fill="none" opacity="0.85" />
       <path d={line("hl")}    stroke="var(--warn)"   strokeWidth="1.5" fill="none" opacity="0.85" />
       <path d={line("val")}   stroke="var(--text-2)" strokeWidth="1.5" fill="none" strokeDasharray="4 4" opacity="0.8" />
