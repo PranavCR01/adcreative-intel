@@ -195,13 +195,13 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             <img
               src={displayImageSrc}
               alt={demo.label}
-              style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
             />
             {heat && useAppStore.getState().heatmapB64 && (
               <img
                 src={`data:image/png;base64,${useAppStore.getState().heatmapB64}`}
                 alt="heatmap"
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', opacity: 0.4, pointerEvents: 'none' }}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', opacity: 0.4, pointerEvents: 'none' }}
               />
             )}
           </div>
