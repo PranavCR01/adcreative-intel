@@ -286,40 +286,42 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
                   <span style={{ color: 'var(--violet)', display: 'flex' }}><IconSparkle size={16} /></span>
                   Budget Impact
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-3)' }}>
-                  <span>Daily budget</span>
-                  <div
-                    style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      background: 'var(--bg)', border: `1px solid ${budgetFocused ? 'var(--violet)' : 'var(--border)'}`,
-                      borderRadius: 6, padding: '4px 8px 4px 10px',
-                      boxShadow: budgetFocused ? '0 0 0 3px var(--violet-wash)' : 'none',
-                      transition: 'border-color .15s, box-shadow .15s',
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 12.5, marginRight: 2 }}>$</span>
-                    <input
-                      type="number"
-                      min={1}
-                      step={10}
-                      value={budgetInput}
-                      onChange={e => setBudgetInput(e.target.value)}
-                      onFocus={() => setBudgetFocused(true)}
-                      onBlur={() => {
-                        setBudgetFocused(false)
-                        const parsed = parseInt(budgetInput, 10)
-                        const clamped = isNaN(parsed) || parsed < 1 ? 1 : parsed
-                        setDailyBudget(clamped)
-                        setBudgetInput(String(clamped))
-                      }}
+                {!isAboveMedian && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-3)' }}>
+                    <span>Daily budget</span>
+                    <div
                       style={{
-                        width: 48, border: 'none', outline: 'none', background: 'transparent',
-                        fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--text)',
-                        fontVariantNumeric: 'tabular-nums', padding: 0,
+                        display: 'inline-flex', alignItems: 'center',
+                        background: 'var(--bg)', border: `1px solid ${budgetFocused ? 'var(--violet)' : 'var(--border)'}`,
+                        borderRadius: 6, padding: '4px 8px 4px 10px',
+                        boxShadow: budgetFocused ? '0 0 0 3px var(--violet-wash)' : 'none',
+                        transition: 'border-color .15s, box-shadow .15s',
                       }}
-                    />
+                    >
+                      <span style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 12.5, marginRight: 2 }}>$</span>
+                      <input
+                        type="number"
+                        min={1}
+                        step={10}
+                        value={budgetInput}
+                        onChange={e => setBudgetInput(e.target.value)}
+                        onFocus={() => setBudgetFocused(true)}
+                        onBlur={() => {
+                          setBudgetFocused(false)
+                          const parsed = parseInt(budgetInput, 10)
+                          const clamped = isNaN(parsed) || parsed < 1 ? 1 : parsed
+                          setDailyBudget(clamped)
+                          setBudgetInput(String(clamped))
+                        }}
+                        style={{
+                          width: 48, border: 'none', outline: 'none', background: 'transparent',
+                          fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--text)',
+                          fontVariantNumeric: 'tabular-nums', padding: 0,
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               {isAboveMedian ? (
                 <div style={{ background: '#ecf6f1' }}>
