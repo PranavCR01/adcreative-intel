@@ -94,6 +94,8 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
   const [chatKey, setChatKey] = useState(0)
   const [dragOver, setDrag] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [detectedVertical, setDetectedVertical] = useState<string | null>(null)
+  const [detectedConfidence, setDetectedConfidence] = useState<number>(0)
   const { isScoring, setIsScoring, setScore, setUploadId, score, uploadId } = useAppStore()
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -115,6 +117,11 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
       setScore({ ctr_score: result.ctr_score, halflife_days: result.halflife_days, confidence: result.confidence })
       useAppStore.getState().setImageUrl(URL.createObjectURL(file))
       if (result.heatmap_b64) useAppStore.getState().setHeatmap(result.heatmap_b64)
+      if (result.predicted_vertical) {
+        setVertical(result.predicted_vertical)
+        setDetectedVertical(result.predicted_vertical)
+        setDetectedConfidence(result.vertical_confidence ?? 0)
+      }
       setChatKey(k => k + 1)
     } catch (err) {
       setUploadError(getUserMessage(err))
@@ -142,13 +149,18 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <span className="muted" style={{ fontSize: 12.5 }}>Demo:</span>
           <div className="select">
-            <select value={vertical} onChange={(e) => { setVertical(e.target.value); useAppStore.getState().reset(); setChatKey(k => k + 1) }}>
+            <select value={vertical} onChange={(e) => { setVertical(e.target.value); setDetectedVertical(null); setDetectedConfidence(0); useAppStore.getState().reset(); setChatKey(k => k + 1) }}>
               <option value="gaming">Gaming · Mobile RPG</option>
               <option value="ecommerce">Ecommerce · DTC</option>
               <option value="finance">Finance · Neobank</option>
             </select>
           </div>
-          <button className="btn btn-sm" onClick={() => { setIsResetting(true); setHeat(false); useAppStore.getState().reset(); setIsResetting(false) }}>
+          {detectedVertical && (
+            <span className="chip indigo" style={{ fontSize: 11 }}>
+              auto: {detectedVertical} {Math.round(detectedConfidence * 100)}%
+            </span>
+          )}
+          <button className="btn btn-sm" onClick={() => { setIsResetting(true); setHeat(false); setDetectedVertical(null); setDetectedConfidence(0); useAppStore.getState().reset(); setIsResetting(false) }}>
             <span className={isResetting ? 'spin' : ''}><IconSparkle size={12} /></span> Reset
           </button>
         </div>

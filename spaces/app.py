@@ -5,10 +5,12 @@ import os
 import time
 import uuid
 
+import joblib
 import numpy as np
 import torch
 from fastapi import FastAPI, File, Form, HTTPException, Query, Security, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from huggingface_hub import hf_hub_download
 from PIL import Image
 
 from gradcam import generate_heatmap_with_cam
@@ -37,6 +39,26 @@ GRID_LABELS = [
     "mid-left", "center",     "mid-right",
     "bot-left", "bot-center", "bot-right",
 ]
+
+_clf = None
+
+
+def get_classifier():
+    global _clf
+    if _clf is None:
+        try:
+            hf_repo  = os.environ["HF_MODEL_REPO"]
+            hf_token = os.getenv("HF_TOKEN")
+            clf_path = hf_hub_download(
+                repo_id=hf_repo,
+                filename="vertical_classifier.pkl",
+                token=hf_token,
+            )
+            _clf = joblib.load(clf_path)
+            print("[app] Vertical classifier loaded", flush=True)
+        except Exception as e:
+            print(f"[app] Classifier load failed (vertical detection disabled): {e}", flush=True)
+    return _clf
 
 
 def verify_token(
@@ -72,11 +94,14 @@ def _cam_region_labels(cam_16: np.ndarray) -> tuple[list[str], list[str]]:
 
 @app.on_event("startup")
 async def startup() -> None:
-    # Pre-load model so first request doesn't time out
     try:
         get_model()
     except Exception:
         pass  # health endpoint will report model_loaded=False; don't crash the server
+    try:
+        get_classifier()
+    except Exception:
+        pass  # vertical detection degrades gracefully; scoring still works
 
 
 @app.get("/health")
@@ -103,7 +128,7 @@ async def benchmark(vertical: str = Query(...)) -> dict:
 @app.post("/score")
 async def score(
     image: UploadFile = File(...),
-    vertical: str = Form(...),
+    vertical: str | None = Form(None),
     _: None = Security(verify_token),
 ) -> dict:
     try:
@@ -129,6 +154,17 @@ async def score(
             embedding = clip_out.pooler_output  # (1, 768)
             outputs = model(embedding=embedding)
 
+        # Vertical classifier — non-fatal, falls back if pkl unavailable
+        clf = get_classifier()
+        if clf is not None:
+            emb_np              = embedding.detach().numpy()   # (1, 768)
+            predicted_vertical  = str(clf.predict(emb_np)[0])
+            proba               = clf.predict_proba(emb_np)[0]
+            vertical_confidence = round(float(proba.max()), 2)
+        else:
+            predicted_vertical  = vertical or "other"
+            vertical_confidence = 0.0
+
         ctr_score = float(outputs["ctr_score"].squeeze())
 
         log_scale = float(outputs["weibull_params"][0, 0].clamp(-10, 10))
@@ -152,6 +188,8 @@ async def score(
         "halflife_days": round(halflife_days, 2),
         "confidence": round(confidence, 4),
         "inference_ms": inference_ms,
+        "predicted_vertical": predicted_vertical,
+        "vertical_confidence": vertical_confidence,
     }
 
 

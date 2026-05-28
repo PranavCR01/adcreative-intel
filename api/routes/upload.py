@@ -69,4 +69,6 @@ async def upload_creative(
         "heatmap_b64": heatmap_result.get("heatmap_b64", ""),
         "high_attention": heatmap_result.get("high_attention", []),
         "low_attention": heatmap_result.get("low_attention", []),
+        "predicted_vertical": score_result.get("predicted_vertical", "other"),
+        "vertical_confidence": score_result.get("vertical_confidence", 0.0),
     }

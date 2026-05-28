@@ -89,6 +89,15 @@ get_creative_score(image_id) → {ctr_score, halflife_days, confidence}
 get_heatmap_regions(image_id) → {high_attention: [regions], low_attention: [regions]}
 get_benchmark(vertical) → {median_ctr, median_halflife, sample_size}
 get_improvement_suggestions(image_id) → {suggestions: [str x3]}
+get_fatigue_projection(halflife_days) → {day_7, day_14, day_21, recommendation}
+
+## Vertical classifier
+- Artifact: model/vertical_classifier.pkl (LogisticRegression, 768-dim SigLIP 2 embeddings)
+- CV accuracy: 79.7% (4-class: gaming/ecommerce/finance/other), 5-fold stratified
+- HF Hub: vertical_classifier.pkl uploaded to pcr12/creative-intelligence-scorer
+- Loaded at HF Spaces startup via get_classifier() — non-fatal if pkl unavailable
+- /score endpoint now returns predicted_vertical + vertical_confidence (float 0-1)
+- Frontend auto-selects detected vertical on upload; shows indigo chip badge; clears on manual override or reset
 
 ## Supabase tables
 cia_uploads: id, created_at, r2_key, vertical, user_session
@@ -118,7 +127,7 @@ NEXT ACTIONS:
 1. Blank trace steps for uploaded images in chat UI (low priority)
 
 ## Pending
-- Stress test suite: tests/test_suite.py not yet written
+- Stress test suite: tests/test_suite.py written — not yet run against live services
 - Embedding cache stale: data/clip_embeddings.pt built with CLIP — delete and regenerate with SigLIP 2 before next training run
 - Render env var: set ALLOWED_ORIGINS=https://adcreative-intel.vercel.app,http://localhost:5173 in Render dashboard
 
@@ -145,6 +154,14 @@ COMPLETED:
   - CORS origins from env var ALLOWED_ORIGINS
   - tenacity retry only on 5xx (not 4xx)
 - SigLIP 2 swap: spaces/, model/, frontend/ all updated to google/siglip2-base-patch16-224
+- Slice 5a AI upgrades (Features 1-3):
+  - Feature 1: Vertical classifier — LogisticRegression on SigLIP 2 embeddings, 79.7% CV acc
+    pkl on HF Hub; /score returns predicted_vertical + vertical_confidence
+    Frontend auto-selects + shows badge; clears on reset or manual override
+  - Feature 2: Confidence-aware agent — CONFIDENCE CALIBRATION block in system prompt
+    LOW (<0.15): flags explicitly; MODERATE (0.15-0.40): hedged; HIGH (>0.40): authoritative
+  - Feature 3: Fatigue projection tool — get_fatigue_projection(halflife_days)
+    Weibull retention at day 7/14/21, shape=1.5; recommendation string
 
 ## Apify data status
 - Run 1 complete: 589 ads, gaming/local mix, NO start/stop dates (active_status=active)

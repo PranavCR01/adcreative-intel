@@ -39,7 +39,19 @@ export function getUserMessage(error: unknown): string {
   return ERROR_MESSAGES.default
 }
 
-export async function uploadCreative(file: File, vertical: string) {
+export interface UploadResult {
+  uploadId: string
+  ctr_score: number
+  halflife_days: number
+  confidence: number
+  heatmap_b64: string
+  high_attention: string[]
+  low_attention: string[]
+  predicted_vertical: string
+  vertical_confidence: number
+}
+
+export async function uploadCreative(file: File, vertical: string): Promise<UploadResult> {
   const uploadId = crypto.randomUUID()
   const resized = await resizeImage(file, 224)
   const formData = new FormData()
