@@ -97,6 +97,7 @@ function pct(v: number, max: number) {
 export default function Analyzer({ navigate: _navigate }: { navigate: (p: string) => void }) {
   const [vertical, setVertical] = useState('gaming')
   const [dailyBudget, setDailyBudget] = useState(100)
+  const [budgetInput, setBudgetInput] = useState('100')
   const [budgetFocused, setBudgetFocused] = useState(false)
   const [heat, setHeat] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
@@ -295,16 +296,22 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
                       boxShadow: budgetFocused ? '0 0 0 3px var(--violet-wash)' : 'none',
                       transition: 'border-color .15s, box-shadow .15s',
                     }}
-                    onFocus={() => setBudgetFocused(true)}
-                    onBlur={() => setBudgetFocused(false)}
                   >
                     <span style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 12.5, marginRight: 2 }}>$</span>
                     <input
                       type="number"
                       min={1}
                       step={10}
-                      value={dailyBudget}
-                      onChange={e => setDailyBudget(Math.max(1, Number(e.target.value)))}
+                      value={budgetInput}
+                      onChange={e => setBudgetInput(e.target.value)}
+                      onFocus={() => setBudgetFocused(true)}
+                      onBlur={() => {
+                        setBudgetFocused(false)
+                        const parsed = parseInt(budgetInput, 10)
+                        const clamped = isNaN(parsed) || parsed < 1 ? 1 : parsed
+                        setDailyBudget(clamped)
+                        setBudgetInput(String(clamped))
+                      }}
                       style={{
                         width: 48, border: 'none', outline: 'none', background: 'transparent',
                         fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--text)',
