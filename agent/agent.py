@@ -65,6 +65,15 @@ def run_agent(image_id: str, user_message: str, vertical: str = "other", history
     messages = []
     for h in history:
         messages.append({"role": h["role"], "content": h["content"]})
+    if history:
+        messages.append({
+            "role": "user",
+            "content": f"[Reminder: Creative ID is {image_id}, Vertical is {vertical}]"
+        })
+        messages.append({
+            "role": "assistant",
+            "content": "Understood, I'll use that creative ID for any tool calls."
+        })
     if not history:
         current_content = f"[Creative ID: {image_id}] [Vertical: {vertical}]\n\n{user_message}"
     else:
