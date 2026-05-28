@@ -29,6 +29,13 @@ interface Demo {
   suggestions: string[]
 }
 
+const VERTICAL_MEDIANS: Record<string, number> = {
+  gaming:    0.089,
+  ecommerce: 0.233,
+  finance:   0.144,
+  other:     0.118,
+}
+
 const DEMOS: Record<string, Demo> = {
   gaming: {
     ad_id: 'apify_f321af3f4e59',
@@ -89,6 +96,7 @@ function pct(v: number, max: number) {
 
 export default function Analyzer({ navigate: _navigate }: { navigate: (p: string) => void }) {
   const [vertical, setVertical] = useState('gaming')
+  const [dailyBudget, setDailyBudget] = useState(100)
   const [heat, setHeat] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [chatKey, setChatKey] = useState(0)
@@ -137,7 +145,12 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
     ? (displayHalflife < 7 ? 'cut-out' : 'wear-out')
     : demo.dtype
 
-  const lowConfidence = displayConf < 0.2
+  const lowConfidence       = displayConf < 0.2
+  const medianCtr           = VERTICAL_MEDIANS[vertical] ?? 0.118
+  const isAboveMedian       = displayCtr >= medianCtr
+  const dailyWaste          = isAboveMedian ? 0 : ((medianCtr - displayCtr) / medianCtr) * dailyBudget
+  const totalWaste          = dailyWaste * displayHalflife
+  const optimalRotation     = Math.round(displayHalflife * Math.pow(-Math.log(0.5), 1 / 1.5))
 
   return (
     <>
@@ -263,6 +276,56 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
               </>
             )}
           </div>
+
+          {score && uploadId && (
+            <div className="card" style={{ padding: '16px 20px' }}>
+              <div className="card-header" style={{ marginBottom: 12 }}>
+                <div className="card-title">💸 Budget Impact</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Daily budget</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-2)' }}>$</span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={dailyBudget}
+                      onChange={e => setDailyBudget(Math.max(1, Number(e.target.value)))}
+                      style={{
+                        width: 60, fontSize: 12, fontFamily: 'var(--font-mono)',
+                        border: '1px solid var(--border)', borderRadius: 4,
+                        padding: '2px 6px', textAlign: 'right',
+                        background: 'var(--surface-2)', color: 'var(--text-1)',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              {isAboveMedian ? (
+                <div style={{ fontSize: 13, color: HEX.good, fontFamily: 'var(--font-mono)' }}>
+                  Above median — strong performer
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-3)' }}>Daily underperformance</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: HEX.danger }}>${Math.round(dailyWaste)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-3)' }}>Total waste over half-life</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: HEX.danger }}>${Math.round(totalWaste)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-3)' }}>Optimal rotation</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: HEX.warn }}>Day {optimalRotation}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--text-3)' }}>Analysis cost</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: HEX.good }}>&lt; $0.01</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <ChatPanel key={chatKey} demo={demo} imageId={currentImageId} vertical={vertical} isDemo={!uploadId} />
         </div>
