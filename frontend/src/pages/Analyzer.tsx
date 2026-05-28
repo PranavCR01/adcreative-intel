@@ -118,7 +118,10 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
       useAppStore.getState().setImageUrl(URL.createObjectURL(file))
       if (result.heatmap_b64) useAppStore.getState().setHeatmap(result.heatmap_b64)
       if (result.predicted_vertical) {
-        setVertical(result.predicted_vertical)
+        const validVerticals = Object.keys(DEMOS)  // ['gaming', 'ecommerce', 'finance']
+        if (validVerticals.includes(result.predicted_vertical)) {
+          setVertical(result.predicted_vertical)
+        }
         setDetectedVertical(result.predicted_vertical)
         setDetectedConfidence(result.vertical_confidence ?? 0)
       }
