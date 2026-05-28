@@ -355,35 +355,47 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
       </div>
       {!score && !uploadId && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          margin: '8px 32px 20px', padding: '12px 0 0 0', flexWrap: 'wrap',
+          display: 'flex', alignItems: 'center', gap: 12,
+          margin: '14px 32px 0', padding: '0 4px', flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12,
+            color: 'var(--text-3)', letterSpacing: '-0.01em', whiteSpace: 'nowrap',
+          }}>
             try a sample →
           </span>
-          {[
-            { path: '/demo/sample-gaming.jpg',    label: 'Gaming',    vertical: 'gaming' },
-            { path: '/demo/sample-ecommerce.jpg', label: 'Ecommerce', vertical: 'ecommerce' },
-            { path: '/demo/sample-finance.jpg',   label: 'Finance',   vertical: 'finance' },
-          ].map(s => (
-            <div
-              key={s.path}
-              onClick={() => loadSample(s.path, s.vertical)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer' }}
-            >
-              <img
-                src={s.path}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[
+              { path: '/demo/sample-gaming.jpg',    label: 'Gaming',    vertical: 'gaming' },
+              { path: '/demo/sample-ecommerce.jpg', label: 'Ecommerce', vertical: 'ecommerce' },
+              { path: '/demo/sample-finance.jpg',   label: 'Finance',   vertical: 'finance' },
+            ].map(s => (
+              <button
+                key={s.path}
+                type="button"
+                onClick={() => loadSample(s.path, s.vertical)}
                 style={{
-                  width: 52, height: 52, objectFit: 'cover',
-                  borderRadius: 'var(--r-sm)', border: '1px solid var(--border)',
-                  transition: 'border-color .15s',
+                  fontFamily: 'var(--font-sans)', fontSize: 12,
+                  color: 'var(--text-2)', background: 'var(--bg)',
+                  border: '1px solid var(--border)', borderRadius: 999,
+                  padding: '4px 12px', cursor: 'pointer', lineHeight: 1.5,
+                  transition: 'color .14s ease, border-color .14s ease, background .14s ease',
                 }}
-                onMouseOver={e => (e.currentTarget.style.borderColor = 'var(--violet)')}
-                onMouseOut={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-              />
-              <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{s.label}</span>
-            </div>
-          ))}
+                onMouseOver={e => {
+                  e.currentTarget.style.color = 'var(--violet)'
+                  e.currentTarget.style.borderColor = 'var(--violet)'
+                  e.currentTarget.style.background = 'var(--violet-wash)'
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.color = 'var(--text-2)'
+                  e.currentTarget.style.borderColor = 'var(--border)'
+                  e.currentTarget.style.background = 'var(--bg)'
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {uploadError && (
