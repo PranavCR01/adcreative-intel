@@ -30,9 +30,9 @@ interface Demo {
 }
 
 const VERTICAL_MEDIANS: Record<string, number> = {
-  gaming:    0.089,
-  ecommerce: 0.233,
-  finance:   0.144,
+  gaming:    0.119,
+  ecommerce: 0.125,
+  finance:   0.111,
   other:     0.118,
 }
 
@@ -280,7 +280,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
           {score && uploadId && (
             <div className="card" style={{ padding: '16px 20px' }}>
               <div className="card-header" style={{ marginBottom: 12 }}>
-                <div className="card-title">💸 Budget Impact</div>
+                <div className="card-title"><IconSparkle size={12} /> Budget Impact</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Daily budget</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
