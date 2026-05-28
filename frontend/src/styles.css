@@ -465,7 +465,7 @@ img, svg { display: block; }
   background: var(--bg);
   text-align: center;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 .arch-node .lbl {
   font-family: var(--font-serif); font-style: italic;
@@ -476,9 +476,9 @@ img, svg { display: block; }
 .arch-arrows {
   position: absolute; left: 32px; right: 32px; top: 50%; height: 1px;
   background: var(--border-strong);
-  z-index: 1;
+  z-index: 0;
 }
-.arch-node.accent { border-color: oklch(0.62 0.18 295 / 0.4); background: var(--violet-wash); }
+.arch-node.accent { border-color: oklch(0.62 0.18 295 / 0.4); background: color-mix(in srgb, var(--violet-wash), var(--bg) 85%); }
 .arch-node.accent .name { color: var(--violet); }
 
 .arch-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }

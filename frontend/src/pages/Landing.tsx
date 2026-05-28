@@ -226,7 +226,7 @@ function Architecture() {
           <div className="arch-node"><div className="lbl">Input</div><div className="name">Creative</div><div className="desc">PNG · 4:5 · ≤8MB</div></div>
           <div className="arch-node"><div className="lbl">Vision</div><div className="name">SigLIP 2</div><div className="desc">frozen · 768-d emb</div></div>
           <div className="arch-node accent"><div className="lbl">Head</div><div className="name">Multi-task MLP</div><div className="desc">CTR + Weibull(α, β)</div></div>
-          <div className="arch-node"><div className="lbl">Agent</div><div className="name">Claude Haiku · ReAct agent</div><div className="desc">4 tools · streaming</div></div>
+          <div className="arch-node"><div className="lbl">Agent</div><div className="name">Claude Haiku · ReAct agent</div><div className="desc">5 tools · streaming</div></div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }} className="arch-detail">
           <div className="card">
@@ -285,11 +285,11 @@ function Footer() {
         <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-4)', fontSize: 11.5 }}>v1.0 · research preview</span>
       </div>
       <div className="footer-links">
-        <a href="#"><IconLinkedin size={14} /> &nbsp;LinkedIn</a>
-        <a href="#"><IconGithub size={14} /> &nbsp;GitHub</a>
-        <a href="#"><IconUser size={14} /> &nbsp;Portfolio</a>
-        <a href="#">Research notes</a>
-        <a href="#">Dev journal</a>
+        <a href="https://www.linkedin.com/in/pranav-c-r-852752202/" target="_blank" rel="noopener noreferrer"><IconLinkedin size={14} /> &nbsp;LinkedIn</a>
+        <a href="https://github.com/PranavCR01" target="_blank" rel="noopener noreferrer"><IconGithub size={14} /> &nbsp;GitHub</a>
+        <a href="https://pranavcr01.github.io/" target="_blank" rel="noopener noreferrer"><IconUser size={14} /> &nbsp;Portfolio</a>
+        <a href="https://www.notion.so/CIA-Research-Architecture-Notes-36ea47a2b4cf80d693b8ef5a6aa32209" target="_blank" rel="noopener noreferrer">Research notes</a>
+        <a href="https://www.notion.so/CIA-Project-Arc-36ea47a2b4cf80aabc94c1ee6ece0570" target="_blank" rel="noopener noreferrer">Dev journal</a>
       </div>
       <div className="footer-meta">© 2026 · pcr12 · built on Hugging Face</div>
     </footer>

@@ -202,7 +202,7 @@ export default function Benchmark() {
         <div className="prose">
           <p>
             Auto-detection of ad vertical uses a logistic regression classifier trained on frozen
-            SigLIP 2 embeddings from 2,542 real Apify ads. 5-fold stratified cross-validation
+            SigLIP 2 embeddings from 2,542 real Meta Ad Library ads. 5-fold stratified cross-validation
             accuracy: <strong>79.7%</strong>.
           </p>
         </div>
