@@ -1041,3 +1041,13 @@ table.t tr.highlight:hover { background: var(--violet-wash-2); }
   .h2 { font-size: 32px; }
   .health-banner { margin: 14px 18px 0; }
 }
+
+/* ========== FORM RESETS ========== */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}

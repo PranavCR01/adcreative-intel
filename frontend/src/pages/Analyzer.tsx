@@ -97,6 +97,7 @@ function pct(v: number, max: number) {
 export default function Analyzer({ navigate: _navigate }: { navigate: (p: string) => void }) {
   const [vertical, setVertical] = useState('gaming')
   const [dailyBudget, setDailyBudget] = useState(100)
+  const [budgetFocused, setBudgetFocused] = useState(false)
   const [heat, setHeat] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [chatKey, setChatKey] = useState(0)
@@ -278,60 +279,79 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
           </div>
 
           {score && uploadId && (
-            <div className="card">
+            <div className="card" style={{ overflow: 'hidden' }}>
               <div className="card-header">
-                <div className="card-title"><IconSparkle size={12} /> Budget Impact</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Daily budget</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-2)' }}>$</span>
+                <div className="card-title" style={{ gap: 9 }}>
+                  <span style={{ color: 'var(--violet)', display: 'flex' }}><IconSparkle size={16} /></span>
+                  Budget Impact
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-3)' }}>
+                  <span>Daily budget</span>
+                  <div
+                    style={{
+                      display: 'inline-flex', alignItems: 'center',
+                      background: 'var(--bg)', border: `1px solid ${budgetFocused ? 'var(--violet)' : 'var(--border)'}`,
+                      borderRadius: 6, padding: '4px 8px 4px 10px',
+                      boxShadow: budgetFocused ? '0 0 0 3px var(--violet-wash)' : 'none',
+                      transition: 'border-color .15s, box-shadow .15s',
+                    }}
+                    onFocus={() => setBudgetFocused(true)}
+                    onBlur={() => setBudgetFocused(false)}
+                  >
+                    <span style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 12.5, marginRight: 2 }}>$</span>
                     <input
                       type="number"
                       min={1}
+                      step={10}
                       value={dailyBudget}
                       onChange={e => setDailyBudget(Math.max(1, Number(e.target.value)))}
                       style={{
-                        width: 60, fontSize: 12, fontFamily: 'var(--font-mono)',
-                        border: '1px solid var(--border)', borderRadius: 4,
-                        padding: '2px 6px', textAlign: 'right',
-                        background: 'var(--surface-2)', color: 'var(--text)',
+                        width: 48, border: 'none', outline: 'none', background: 'transparent',
+                        fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--text)',
+                        fontVariantNumeric: 'tabular-nums', padding: 0,
                       }}
                     />
                   </div>
                 </div>
               </div>
               {isAboveMedian ? (
-                <div className="bench" style={{ background: 'var(--good-wash)', borderTop: 'none' }}>
-                  <div className="bench-row">
-                    <span className="lbl" style={{ flex: 1 }}>CTR advantage</span>
-                    <span className="v" style={{ fontFamily: 'var(--font-mono)', color: HEX.good }}>+{(((displayCtr - medianCtr) / medianCtr) * 100).toFixed(0)}% vs median</span>
+                <div style={{ background: '#ecf6f1' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', borderBottom: '1px solid #d6eadf' }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-3)', letterSpacing: '-0.003em' }}>CTR advantage</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: HEX.good, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>
+                      <span style={{ marginRight: 6, opacity: 0.8 }}>↑</span>+{(((displayCtr - medianCtr) / medianCtr) * 100).toFixed(0)}% vs median
+                    </span>
                   </div>
-                  <div className="bench-row">
-                    <span className="lbl" style={{ flex: 1 }}>Rotate by</span>
-                    <span className="v" style={{ fontFamily: 'var(--font-mono)' }}>Day {optimalRotation}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', borderBottom: '1px solid #d6eadf' }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-3)', letterSpacing: '-0.003em' }}>Rotate by</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: HEX.text2, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>Day {optimalRotation}</span>
                   </div>
-                  <div className="bench-row">
-                    <span className="lbl" style={{ flex: 1 }}>Analysis cost</span>
-                    <span className="v" style={{ fontFamily: 'var(--font-mono)', color: HEX.good }}>&lt; $0.01</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px' }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-3)', letterSpacing: '-0.003em' }}>Analysis cost</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: HEX.good, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>&lt; $0.01</span>
                   </div>
                 </div>
               ) : (
-                <div className="bench" style={{ borderTop: 'none' }}>
-                  <div className="bench-row">
-                    <span className="lbl" style={{ flex: 1 }}>Daily waste</span>
-                    <span className="v" style={{ fontFamily: 'var(--font-mono)', color: HEX.danger }}>${Math.round(dailyWaste)}</span>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-3)', letterSpacing: '-0.003em' }}>Daily waste</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: HEX.danger, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>
+                      <span style={{ marginRight: 6, opacity: 0.7 }}>↓</span>${Math.round(dailyWaste)}
+                    </span>
                   </div>
-                  <div className="bench-row">
-                    <span className="lbl" style={{ flex: 1 }}>Campaign waste</span>
-                    <span className="v" style={{ fontFamily: 'var(--font-mono)', color: HEX.danger }}>${Math.round(totalWaste)}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-3)', letterSpacing: '-0.003em' }}>Campaign waste</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: HEX.danger, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>
+                      <span style={{ marginRight: 6, opacity: 0.7 }}>↓</span>${Math.round(totalWaste)}
+                    </span>
                   </div>
-                  <div className="bench-row">
-                    <span className="lbl" style={{ flex: 1 }}>Rotate by</span>
-                    <span className="v" style={{ fontFamily: 'var(--font-mono)', color: HEX.warn }}>Day {optimalRotation}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-3)', letterSpacing: '-0.003em' }}>Rotate by</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: HEX.warn, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>Day {optimalRotation}</span>
                   </div>
-                  <div className="bench-row">
-                    <span className="lbl" style={{ flex: 1 }}>Analysis cost</span>
-                    <span className="v" style={{ fontFamily: 'var(--font-mono)', color: HEX.good }}>&lt; $0.01</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px' }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--text-3)', letterSpacing: '-0.003em' }}>Analysis cost</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: HEX.good, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>&lt; $0.01</span>
                   </div>
                 </div>
               )}
