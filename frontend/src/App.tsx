@@ -56,9 +56,9 @@ function Nav({ route, navigate }: { route: string; navigate: (p: string) => void
         <span className="status-pill">
           <span className="status-dot"></span> api · live
         </span>
-        <button className="btn btn-sm">
+        <a className="btn btn-sm" href="https://github.com/PranavCR01/adcreative-intel" target="_blank" rel="noopener noreferrer">
           <IconGithub size={13} /> Source
-        </button>
+        </a>
       </div>
     </nav>
   )

@@ -86,15 +86,15 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
     const blob = await res.blob()
     const file = new File([blob], path.split('/').pop()!, { type: 'image/jpeg' })
     setVertical(sampleVertical)
-    handleFile(file)
+    handleFile(file, sampleVertical)
   }
 
-  async function handleFile(file: File) {
+  async function handleFile(file: File, overrideVertical?: string) {
     if (!file) return
     setUploadError(null)
     setIsScoring(true)
     try {
-      const result = await uploadCreative(file, vertical)
+      const result = await uploadCreative(file, overrideVertical ?? vertical)
       setUploadId(result.uploadId)
       setScore({ ctr_score: result.ctr_score, halflife_days: result.halflife_days, confidence: result.confidence })
       useAppStore.getState().setImageUrl(URL.createObjectURL(file))
@@ -354,7 +354,10 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
         </div>
       </div>
       {!score && !uploadId && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          margin: '8px 32px 20px', padding: '12px 0 0 0', flexWrap: 'wrap',
+        }}>
           <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
             try a sample →
           </span>
@@ -371,14 +374,14 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
               <img
                 src={s.path}
                 style={{
-                  width: 48, height: 48, objectFit: 'cover',
-                  borderRadius: 6, border: '1px solid var(--border)',
+                  width: 52, height: 52, objectFit: 'cover',
+                  borderRadius: 'var(--r-sm)', border: '1px solid var(--border)',
                   transition: 'border-color .15s',
                 }}
                 onMouseOver={e => (e.currentTarget.style.borderColor = 'var(--violet)')}
                 onMouseOut={e => (e.currentTarget.style.borderColor = 'var(--border)')}
               />
-              <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{s.label}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{s.label}</span>
             </div>
           ))}
         </div>
