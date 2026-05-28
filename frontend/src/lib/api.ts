@@ -66,11 +66,16 @@ export async function uploadCreative(file: File, vertical: string): Promise<Uplo
   return { uploadId, ...result }
 }
 
-export async function sendChat(imageId: string, message: string, vertical = 'gaming') {
+export async function sendChat(
+  imageId: string,
+  message: string,
+  vertical = 'gaming',
+  history: { role: string; content: string }[] = [],
+) {
   const res = await fetchWithRetry(`${BACKEND_URL}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image_id: imageId, message, vertical }),
+    body: JSON.stringify({ image_id: imageId, message, vertical, history }),
   })
   return res.json()
 }

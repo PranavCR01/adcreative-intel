@@ -404,11 +404,15 @@ function ChatPanel({ demo, imageId, vertical, isDemo }: { demo: Demo; imageId: s
   async function send(q: string) {
     if (!q.trim() || busy) return
     const userMsg: Message = { role: 'user', time: new Date().toLocaleTimeString(), text: q }
+    const history = messages.map(m => ({
+      role: m.role === 'agent' ? 'assistant' : 'user',
+      content: m.text,
+    }))
     setMessages(m => [...m, userMsg])
     setText('')
     setBusy(true)
     try {
-      const result = await sendChat(imageId, q, vertical)
+      const result = await sendChat(imageId, q, vertical, history)
       const agentMsg: Message = {
         role: 'agent',
         time: new Date().toLocaleTimeString(),

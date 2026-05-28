@@ -13,6 +13,7 @@ class ChatRequest(BaseModel):
     message: str
     session_id: str = ""    # optional, default prevents 422
     vertical: str = "gaming"
+    history: list[dict] = []
 
 
 class ChatResponse(BaseModel):
@@ -25,7 +26,7 @@ class ChatResponse(BaseModel):
 async def chat(request: ChatRequest) -> ChatResponse:
     try:
         print(f"[chat] image_id={request.image_id} vertical={request.vertical} message={request.message[:50]}", flush=True)
-        result = await asyncio.to_thread(run_agent, request.image_id, request.message, request.vertical)
+        result = await asyncio.to_thread(run_agent, request.image_id, request.message, request.vertical, request.history)
         return ChatResponse(**result)
     except Exception as e:
         print(f"Chat error: {e}")

@@ -60,9 +60,16 @@ TOOL_SCHEMAS = [
 ]
 
 
-def run_agent(image_id: str, user_message: str, vertical: str = "other") -> dict:
+def run_agent(image_id: str, user_message: str, vertical: str = "other", history: list[dict] = []) -> dict:
     trace: list[dict] = []
-    messages = [{"role": "user", "content": f"[Creative ID: {image_id}] [Vertical: {vertical}]\n\n{user_message}"}]
+    messages = []
+    for h in history:
+        messages.append({"role": h["role"], "content": h["content"]})
+    if not history:
+        current_content = f"[Creative ID: {image_id}] [Vertical: {vertical}]\n\n{user_message}"
+    else:
+        current_content = user_message
+    messages.append({"role": "user", "content": current_content})
     try:
         for _ in range(5):      # max_steps=5 — hard cap prevents infinite loops
             print(f"[agent] turn={_} messages={json.dumps(messages[-2:], default=str, indent=2)}", flush=True)
