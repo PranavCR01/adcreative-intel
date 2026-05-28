@@ -81,6 +81,14 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
   const currentImageId   = uploadId ?? demo.ad_id
   const displayImageSrc  = useAppStore(s => s.imageUrl) ?? demo.imageSrc
 
+  async function loadSample(path: string, sampleVertical: string) {
+    const res = await fetch(path)
+    const blob = await res.blob()
+    const file = new File([blob], path.split('/').pop()!, { type: 'image/jpeg' })
+    setVertical(sampleVertical)
+    handleFile(file)
+  }
+
   async function handleFile(file: File) {
     if (!file) return
     setUploadError(null)
@@ -345,6 +353,36 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
           <button className="btn" onClick={(e) => { e.stopPropagation(); fileRef.current?.click() }}>Browse files</button>
         </div>
       </div>
+      {!score && !uploadId && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+            try a sample →
+          </span>
+          {[
+            { path: '/demo/sample-gaming.jpg',    label: 'Gaming',    vertical: 'gaming' },
+            { path: '/demo/sample-ecommerce.jpg', label: 'Ecommerce', vertical: 'ecommerce' },
+            { path: '/demo/sample-finance.jpg',   label: 'Finance',   vertical: 'finance' },
+          ].map(s => (
+            <div
+              key={s.path}
+              onClick={() => loadSample(s.path, s.vertical)}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer' }}
+            >
+              <img
+                src={s.path}
+                style={{
+                  width: 48, height: 48, objectFit: 'cover',
+                  borderRadius: 6, border: '1px solid var(--border)',
+                  transition: 'border-color .15s',
+                }}
+                onMouseOver={e => (e.currentTarget.style.borderColor = 'var(--violet)')}
+                onMouseOut={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+              />
+              <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {uploadError && (
         <p style={{ marginTop: 8, fontSize: 12, color: '#c44021', fontFamily: 'var(--font-mono)' }}>
           {uploadError}
