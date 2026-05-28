@@ -160,7 +160,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
           </div>
           {detectedVertical && (
             <span className="chip indigo" style={{ fontSize: 11 }}>
-              auto: {detectedVertical} {Math.round(detectedConfidence * 100)}%
+              Auto-detected: {detectedVertical.charAt(0).toUpperCase() + detectedVertical.slice(1)} ({Math.round(detectedConfidence * 100)}%)
             </span>
           )}
           <button className="btn btn-sm" onClick={() => { setIsResetting(true); setHeat(false); setDetectedVertical(null); setDetectedConfidence(0); useAppStore.getState().reset(); setIsResetting(false) }}>
@@ -437,7 +437,7 @@ function ChatPanel({ demo, imageId, vertical, isDemo }: { demo: Demo; imageId: s
           <span className={busy ? 'spin' : ''}><IconSparkle size={12} /></span> Explanation Agent
           <span className="kbd">claude-haiku-4-5</span>
         </div>
-        <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>4 tools loaded</span>
+        <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>5 tools loaded</span>
       </div>
       <div className="chat-stream" ref={streamRef}>
         {messages.map((m, i) => (

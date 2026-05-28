@@ -161,14 +161,18 @@ def get_improvement_suggestions(image_id: str, trace: list[dict]) -> dict:
                 "Given the performance metrics below, return exactly 3 concrete, "
                 "actionable improvement suggestions as a JSON array of strings. "
                 "Each suggestion must reference a specific metric from the data. "
-                "Respond only with the JSON array, no other text."
+                "Respond with a JSON array only. No markdown, no backticks, no explanation. "
+                "Just the raw JSON array starting with [ and ending with ]."
             ),
             messages=[{"role": "user", "content": grounding}],
         )
 
         raw = resp.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw
+            raw = raw.rsplit("```", 1)[0]
         try:
-            parsed = json.loads(raw)
+            parsed = json.loads(raw.strip())
             suggestions = parsed if isinstance(parsed, list) else []
         except json.JSONDecodeError:
             suggestions = []
