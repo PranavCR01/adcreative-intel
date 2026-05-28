@@ -115,7 +115,7 @@ HF_SPACES_URL, HF_TOKEN, API_TOKEN
 
 ## Current slice
 SLICE: 6 — Launch
-STATUS: Pending
+STATUS: In progress
 
 NEXT ACTIONS:
 1. README — project overview, architecture diagram, demo GIF
@@ -174,12 +174,42 @@ COMPLETED:
   - get_improvement_suggestions: backtick fence stripping + strengthened prompt
 - Budget Impact card (Analyzer.tsx):
   - Pure frontend math, upload-only (score && uploadId guard)
-  - Editable daily budget input, defaults $100
+  - Editable daily budget input, defaults $100; budgetInput (string) + dailyBudget (number) split state
+  - Input hidden when isAboveMedian (no waste to calculate)
   - daily_waste = ((median_ctr - ctr) / median_ctr) * budget (0 if above median)
   - total_waste = daily_waste * halflife_days
   - optimal_rotation = halflife * (-ln(0.5))^(1/1.5) — Weibull t=0.5 crossing
   - VERTICAL_MEDIANS from real dataset: gaming=0.089, ecommerce=0.233, finance=0.144, other=0.118
   - Above-median path shows green "strong performer" message
+- Slice 6 UI polish (this session):
+  - Demo switching removed — single DEFAULT_DEMO (gaming) always loaded; vertical state updated by auto-detect only
+  - Reset button restores vertical to 'gaming'
+  - Filename chip removed from Creative card header
+  - Demo dropdown removed from analyzer-bar
+  - Explanation Agent spinner: color: var(--violet)
+  - Budget input: conditional on !isAboveMedian
+  - Browser tab title: "Creative Intelligence Agent"
+  - Favicon: Aperture C SVG (violet tile, white arc+dot) at frontend/public/favicon.svg
+  - Nav: brand-mark div replaced with favicon.svg img (24×24)
+  - Benchmark page: all data updated to SigLIP 2 results
+    - Model table: 6 rows, CLIP→SigLIP2 progression, r=0.645 MAE=0.036
+    - Half-life columns dropped (data only available for CTR)
+    - Dataset table: Apify 2,542 real + 960 sentinel rows removed + 18,746 synthetic
+    - Per-vertical stats: real-only sentinel-free (Gaming n=1,070, Ecom n=527, Finance n=248)
+    - VertCard CTR display: (ctr*100).toFixed(2)% — 8.90/23.30/14.40%
+    - New Vertical Classifier section: 79.7% CV acc, recall table
+    - Loss chart: best epoch 14, SigLIP 2 footer
+    - All CLIP references → SigLIP 2
+  - Landing page:
+    - All CLIP references → SigLIP 2
+    - Spearman r stat: 0.254 → 0.645 · real-only test set
+    - get_fatigue_projection added as 5th tool in toolbelt
+    - WasteSection added (62.5/66.7/53.8% waste cards)
+    - Footer links: real URLs + target="_blank"
+    - HeroViz checkpoint: siglip2_scorer_v1.ckpt
+    - Arch connector z-index fixed (nodes z-index:1, connector z-index:0)
+    - Agent node: 5 tools · streaming
+    - "Apify ads" → "Meta Ad Library ads" everywhere (except source name in table)
 
 ## Apify data status
 - Run 1 complete: 589 ads, gaming/local mix, NO start/stop dates (active_status=active)
