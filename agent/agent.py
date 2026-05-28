@@ -5,14 +5,16 @@ from agent.tools import (
     _get_client,
     get_benchmark,
     get_creative_score,
+    get_fatigue_projection,
     get_heatmap_regions,
     get_improvement_suggestions,
 )
 
 TOOL_MAP = {
-    "get_creative_score": get_creative_score,
-    "get_benchmark": get_benchmark,
-    "get_heatmap_regions": get_heatmap_regions,
+    "get_creative_score":          get_creative_score,
+    "get_benchmark":               get_benchmark,
+    "get_fatigue_projection":      get_fatigue_projection,
+    "get_heatmap_regions":         get_heatmap_regions,
     "get_improvement_suggestions": get_improvement_suggestions,
 }
 
@@ -36,6 +38,24 @@ TOOL_SCHEMAS = [
         "name": "get_improvement_suggestions",
         "description": "Returns 3 concrete improvement suggestions. Call after get_creative_score and get_heatmap_regions.",
         "input_schema": {"type": "object", "properties": {"image_id": {"type": "string"}}, "required": ["image_id"]},
+    },
+    {
+        "name": "get_fatigue_projection",
+        "description": (
+            "Computes ad fatigue retention at day 7, 14, and 21 from a halflife value. "
+            "Call after get_creative_score when the user asks about longevity, "
+            "refresh cadence, or how long to run the ad."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "halflife_days": {
+                    "type": "number",
+                    "description": "Predicted fatigue halflife in days",
+                }
+            },
+            "required": ["halflife_days"],
+        },
     },
 ]
 

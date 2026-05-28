@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import time
 
@@ -184,3 +185,49 @@ def get_improvement_suggestions(image_id: str, trace: list[dict]) -> dict:
         return data
     except Exception as e:
         return {"error": f"Could not generate suggestions: {str(e)}"}
+
+
+def get_fatigue_projection(halflife_days: float, trace: list[dict]) -> dict:
+    """
+    Computes Weibull retention curve at day 7, 14, and 21 checkpoints.
+    Formula: retention(t) = exp(-(t / halflife_days) ** 1.5)
+    shape=1.5 matches the Weibull head trained in clip_head.py.
+    Args:
+        halflife_days: predicted fatigue halflife from get_creative_score
+    Returns:
+        day_7, day_14, day_21 (float 0-1), recommendation (str)
+    """
+    start = time.time()
+    try:
+        if halflife_days <= 0:
+            return {"error": "halflife_days must be positive"}
+
+        def retention(t: float) -> float:
+            return round(math.exp(-((t / halflife_days) ** 1.5)), 3)
+
+        day_7  = retention(7)
+        day_14 = retention(14)
+        day_21 = retention(21)
+
+        if day_7 < 0.5:
+            recommendation = "rotate creative by day 5"
+        elif day_14 < 0.5:
+            recommendation = "plan creative refresh for week 2"
+        else:
+            recommendation = "strong longevity, can run 3+ weeks"
+
+        data = {
+            "day_7":          day_7,
+            "day_14":         day_14,
+            "day_21":         day_21,
+            "recommendation": recommendation,
+        }
+        trace.append({
+            "tool":        "get_fatigue_projection",
+            "inputs":      {"halflife_days": halflife_days},
+            "output":      data,
+            "duration_ms": int((time.time() - start) * 1000),
+        })
+        return data
+    except Exception as e:
+        return {"error": f"Could not compute fatigue projection: {str(e)}"}
