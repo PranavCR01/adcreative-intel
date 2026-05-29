@@ -155,18 +155,36 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>224×224 · JPEG</span>
           </div>
           <div className="creative-area" style={{ position: 'relative', overflow: 'hidden' }}>
-            <img
-              src={displayImageSrc}
-              alt={demo.label}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-            />
-            {heat && useAppStore.getState().heatmapB64 && (
-              <img
-                src={`data:image/png;base64,${useAppStore.getState().heatmapB64}`}
-                alt="heatmap"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', opacity: 0.4, pointerEvents: 'none' }}
-              />
-            )}
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', maxHeight: '100%' }}>
+                <img
+                  src={displayImageSrc}
+                  alt={demo.label}
+                  style={{ display: 'block', maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }}
+                />
+                {heat && useAppStore.getState().heatmapB64 && (
+                  <img
+                    src={`data:image/png;base64,${useAppStore.getState().heatmapB64}`}
+                    alt="heatmap"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      opacity: 0.4,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
           <div className="creative-controls">
             <div className="left">
