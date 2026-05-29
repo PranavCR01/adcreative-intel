@@ -184,7 +184,7 @@ function HowItWorks() {
   const steps = [
     { n: 'Step 01', h: 'Upload', p: 'Drop a static image creative — gaming, ecommerce, or finance vertical. PNG or JPEG, up to 8MB.', v: '→ POST /upload · ~120ms' },
     { n: 'Step 02', h: 'Score', p: 'SigLIP 2 extracts a 768-dim embedding. A multi-task head returns a CTR estimate and a Weibull half-life distribution.', v: '→ ctr_score · halflife_days · confidence' },
-    { n: 'Step 03', h: 'Explain', p: 'An agent calls Grad-CAM, benchmark, and improvement tools to ground the score in the regions of the image that drove it.', v: '→ agent.run() · 4 tools · streaming' },
+    { n: 'Step 03', h: 'Explain', p: 'An agent calls Grad-CAM, benchmark, and improvement tools to ground the score in the regions of the image that drove it.', v: '→ agent.run() · 5 tools · streaming' },
   ]
   return (
     <section className="section">
@@ -280,7 +280,7 @@ function Footer() {
   return (
     <footer className="footer">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div className="brand-mark" style={{ width: 18, height: 18 }}></div>
+        <img src="/favicon.svg" style={{ width: 20, height: 20, verticalAlign: 'middle' }} alt="" />
         <span style={{ fontSize: 13, color: 'var(--text-3)' }}>Creative Intelligence Agent</span>
         <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-4)', fontSize: 11.5 }}>v1.0 · research preview</span>
       </div>
