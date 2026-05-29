@@ -332,77 +332,80 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
         </div>
       </div>
 
-      <div
-        className={'upload-zone' + (dragOver ? ' drag' : '')}
-        onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
-        onClick={() => fileRef.current?.click()}
-      >
-        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
-        <div className="left">
-          <div className="upload-icon"><IconUpload size={20} /></div>
-          <div>
-            <h4>Drop your own creative to score</h4>
-            <p>PNG or JPEG · up to 8MB · gaming / ecommerce / finance verticals supported</p>
+      <div style={{ margin: '0 32px 32px' }}>
+        <div
+          className={'upload-zone' + (dragOver ? ' drag' : '')}
+          style={{ margin: 0 }}
+          onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
+          onClick={() => fileRef.current?.click()}
+        >
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+          <div className="left">
+            <div className="upload-icon"><IconUpload size={20} /></div>
+            <div>
+              <h4>Drop your own creative to score</h4>
+              <p>PNG or JPEG · up to 8MB · gaming / ecommerce / finance verticals supported</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span className="chip">Supabase Storage · creatives bucket</span>
+            <button className="btn" onClick={(e) => { e.stopPropagation(); fileRef.current?.click() }}>Browse files</button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span className="chip">Supabase Storage · creatives bucket</span>
-          <button className="btn" onClick={(e) => { e.stopPropagation(); fileRef.current?.click() }}>Browse files</button>
-        </div>
-      </div>
-      {!score && !uploadId && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12,
-          margin: '14px 32px 0', padding: '0 4px', flexWrap: 'wrap',
-        }}>
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 12,
-            color: 'var(--text-3)', letterSpacing: '-0.01em', whiteSpace: 'nowrap',
+        {!score && !uploadId && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            marginTop: 14, padding: '0 4px', flexWrap: 'wrap',
           }}>
-            try a sample →
-          </span>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {[
-              { path: '/demo/sample-gaming.jpg',    label: 'Gaming',    vertical: 'gaming' },
-              { path: '/demo/sample-ecommerce.jpg', label: 'Ecommerce', vertical: 'ecommerce' },
-              { path: '/demo/sample-finance.jpg',   label: 'Finance',   vertical: 'finance' },
-            ].map(s => (
-              <button
-                key={s.path}
-                type="button"
-                onClick={() => loadSample(s.path, s.vertical)}
-                style={{
-                  fontFamily: 'var(--font-sans)', fontSize: 12,
-                  color: 'var(--text-2)', background: 'var(--bg)',
-                  border: '1px solid var(--border)', borderRadius: 999,
-                  padding: '4px 12px', cursor: 'pointer', lineHeight: 1.5,
-                  transition: 'color .14s ease, border-color .14s ease, background .14s ease',
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.color = 'var(--violet)'
-                  e.currentTarget.style.borderColor = 'var(--violet)'
-                  e.currentTarget.style.background = 'var(--violet-wash)'
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.color = 'var(--text-2)'
-                  e.currentTarget.style.borderColor = 'var(--border)'
-                  e.currentTarget.style.background = 'var(--bg)'
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: 12,
+              color: 'var(--text-3)', letterSpacing: '-0.01em', whiteSpace: 'nowrap',
+            }}>
+              try a sample →
+            </span>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[
+                { path: '/demo/sample-gaming.jpg',    label: 'Gaming',    vertical: 'gaming' },
+                { path: '/demo/sample-ecommerce.jpg', label: 'Ecommerce', vertical: 'ecommerce' },
+                { path: '/demo/sample-finance.jpg',   label: 'Finance',   vertical: 'finance' },
+              ].map(s => (
+                <button
+                  key={s.path}
+                  type="button"
+                  onClick={() => loadSample(s.path, s.vertical)}
+                  style={{
+                    fontFamily: 'var(--font-sans)', fontSize: 12,
+                    color: 'var(--text-2)', background: 'var(--bg)',
+                    border: '1px solid var(--border)', borderRadius: 999,
+                    padding: '4px 12px', cursor: 'pointer', lineHeight: 1.5,
+                    transition: 'color .14s ease, border-color .14s ease, background .14s ease',
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.color = 'var(--violet)'
+                    e.currentTarget.style.borderColor = 'var(--violet)'
+                    e.currentTarget.style.background = 'var(--violet-wash)'
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.color = 'var(--text-2)'
+                    e.currentTarget.style.borderColor = 'var(--border)'
+                    e.currentTarget.style.background = 'var(--bg)'
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      {uploadError && (
-        <p style={{ marginTop: 8, fontSize: 12, color: '#c44021', fontFamily: 'var(--font-mono)' }}>
-          {uploadError}
-        </p>
-      )}
+        )}
+        {uploadError && (
+          <p style={{ marginTop: 8, fontSize: 12, color: '#c44021', fontFamily: 'var(--font-mono)' }}>
+            {uploadError}
+          </p>
+        )}
+      </div>
     </>
   )
 }
