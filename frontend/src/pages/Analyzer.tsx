@@ -91,6 +91,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
 
   async function handleFile(file: File, overrideVertical?: string) {
     if (!file) return
+    setHeat(false)
     setUploadError(null)
     setIsScoring(true)
     try {
@@ -491,6 +492,11 @@ interface Message {
 }
 
 function ChatPanel({ demo, imageId, vertical, isDemo }: { demo: Demo; imageId: string; vertical: string; isDemo: boolean }) {
+  const suggestions = [
+    'Why is the half-life so long?',
+    `How does this compare to ${vertical.charAt(0).toUpperCase() + vertical.slice(1)} median?`,
+    'What should I try next?',
+  ]
   const [messages, setMessages] = useState<Message[]>(
     isDemo
       ? [{ role: 'agent', time: 'now', latency: demo.initial.trace.reduce((s, t) => s + (t.dur ?? 0), 0),
@@ -571,10 +577,10 @@ function ChatPanel({ demo, imageId, vertical, isDemo }: { demo: Demo; imageId: s
           </div>
         )}
       </div>
-      {lastIsAgent && !busy && demo.suggestions.length > 0 && (
+      {lastIsAgent && !busy && suggestions.length > 0 && (
         <div style={{ padding: '0 14px 10px', display: 'flex', gap: 6, flexWrap: 'wrap', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
           <span className="mono" style={{ fontSize: 10.5, color: 'var(--text-4)', alignSelf: 'center', marginRight: 4 }}>try:</span>
-          {demo.suggestions.map((s, i) => (
+          {suggestions.map((s, i) => (
             <button key={i} className="btn btn-sm" style={{ fontSize: 11.5 }} onClick={() => send(s)}>{s}</button>
           ))}
         </div>
@@ -602,7 +608,7 @@ function Msg({ m, idx, toggleTrace }: { m: Message; idx: number; toggleTrace: (i
         <div className="meta">
           <span>{m.role === 'agent' ? 'agent' : 'you'}</span>
           <span>{m.time}</span>
-          {m.latency != null && <span>{m.latency}ms · 4 tools</span>}
+          {m.latency != null && <span>{m.latency}ms · 5 tools</span>}
         </div>
         <div className="msg-text" dangerouslySetInnerHTML={{ __html: renderMd(m.text) }}></div>
         {m.trace && m.trace.length > 0 && (
