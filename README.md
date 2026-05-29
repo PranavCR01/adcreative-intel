@@ -330,5 +330,3 @@ adcreative-intel/
 
 **Pranav CR**
 AI Engineer · [prc4@illinois.edu](mailto:prc4@illinois.edu) · [GitHub](https://github.com/PranavCR01)
-
-*Pitched to Moloco, AppLovin, and Liftoff as an open-source creative scoring layer.*
