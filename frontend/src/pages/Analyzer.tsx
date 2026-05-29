@@ -163,11 +163,11 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', maxHeight: '100%' }}>
+              <div style={{ position: 'relative', display: 'inline-block', height: '100%', maxWidth: '100%' }}>
                 <img
                   src={displayImageSrc}
                   alt={demo.label}
-                  style={{ display: 'block', maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }}
+                  style={{ display: 'block', height: '100%', width: 'auto', maxWidth: '100%' }}
                 />
                 {heat && useAppStore.getState().heatmapB64 && (
                   <img
