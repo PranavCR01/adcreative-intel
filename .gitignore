@@ -61,3 +61,29 @@ Thumbs.db
 
 #ML-Intern Files
 ml-intern/
+
+# Classifier binary
+*.pkl
+
+# Experiment label variants
+data/labels_clean_*.csv
+
+# Training output artifacts
+results_*.json
+experiment_comparison_*.csv
+validation_results.json
+validation_ctr_histogram.png
+
+# Root HTML mockups (anchored to repo root — does not affect frontend/index.html)
+/*.html
+
+# Editor temp files
+*.tmp.*
+
+# Claude local settings
+.claude/settings.local.json
+
+# Scratch files
+d.py
+check_dims.py
+find_samples.py
