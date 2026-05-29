@@ -71,11 +71,12 @@ export async function sendChat(
   message: string,
   vertical = 'gaming',
   history: { role: string; content: string }[] = [],
+  verticalConfidence = 1.0,
 ) {
   const res = await fetchWithRetry(`${BACKEND_URL}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image_id: imageId, message, vertical, history }),
+    body: JSON.stringify({ image_id: imageId, message, vertical, history, vertical_confidence: verticalConfidence }),
   })
   return res.json()
 }

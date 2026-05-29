@@ -329,7 +329,7 @@ export default function Analyzer({ navigate: _navigate }: { navigate: (p: string
             </div>
           )}
 
-          <ChatPanel key={chatKey} demo={demo} imageId={currentImageId} vertical={vertical} isDemo={!uploadId} />
+          <ChatPanel key={chatKey} demo={demo} imageId={currentImageId} vertical={vertical} isDemo={!uploadId} verticalConfidence={uploadId ? detectedConfidence : 1.0} />
         </div>
       </div>
 
@@ -491,7 +491,7 @@ interface Message {
   open?: boolean
 }
 
-function ChatPanel({ demo, imageId, vertical, isDemo }: { demo: Demo; imageId: string; vertical: string; isDemo: boolean }) {
+function ChatPanel({ demo, imageId, vertical, isDemo, verticalConfidence = 1 }: { demo: Demo; imageId: string; vertical: string; isDemo: boolean; verticalConfidence?: number }) {
   const suggestions = [
     'Why is the half-life so long?',
     `How does this compare to ${vertical.charAt(0).toUpperCase() + vertical.slice(1)} median?`,
@@ -530,7 +530,7 @@ function ChatPanel({ demo, imageId, vertical, isDemo }: { demo: Demo; imageId: s
     setText('')
     setBusy(true)
     try {
-      const result = await sendChat(imageId, q, vertical, history)
+      const result = await sendChat(imageId, q, vertical, history, verticalConfidence)
       const agentMsg: Message = {
         role: 'agent',
         time: new Date().toLocaleTimeString(),

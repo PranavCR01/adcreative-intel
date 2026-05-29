@@ -14,6 +14,7 @@ class ChatRequest(BaseModel):
     session_id: str = ""    # optional, default prevents 422
     vertical: str = "gaming"
     history: list[dict] = []
+    vertical_confidence: float = 1.0
 
 
 class ChatResponse(BaseModel):
@@ -25,8 +26,8 @@ class ChatResponse(BaseModel):
 @router.post("", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     try:
-        print(f"[chat] image_id={request.image_id} vertical={request.vertical} message={request.message[:50]}", flush=True)
-        result = await asyncio.to_thread(run_agent, request.image_id, request.message, request.vertical, request.history)
+        print(f"[chat] image_id={request.image_id} vertical={request.vertical} conf={request.vertical_confidence:.0%} message={request.message[:50]}", flush=True)
+        result = await asyncio.to_thread(run_agent, request.image_id, request.message, request.vertical, request.history, request.vertical_confidence)
         return ChatResponse(**result)
     except Exception as e:
         print(f"Chat error: {e}")

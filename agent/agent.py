@@ -60,7 +60,7 @@ TOOL_SCHEMAS = [
 ]
 
 
-def run_agent(image_id: str, user_message: str, vertical: str = "other", history: list[dict] = []) -> dict:
+def run_agent(image_id: str, user_message: str, vertical: str = "other", history: list[dict] = [], vertical_confidence: float = 1.0) -> dict:
     trace: list[dict] = []
     messages = []
     for h in history:
@@ -68,14 +68,14 @@ def run_agent(image_id: str, user_message: str, vertical: str = "other", history
     if history:
         messages.append({
             "role": "user",
-            "content": f"[Reminder: Creative ID is {image_id}, Vertical is {vertical}]"
+            "content": f"[Reminder: Creative ID is {image_id}, Vertical is {vertical} (confidence: {vertical_confidence:.0%})]"
         })
         messages.append({
             "role": "assistant",
             "content": "Understood, I'll use that creative ID for any tool calls."
         })
     if not history:
-        current_content = f"[Creative ID: {image_id}] [Vertical: {vertical}]\n\n{user_message}"
+        current_content = f"[Creative ID: {image_id}] [Vertical: {vertical} (confidence: {vertical_confidence:.0%})]\n\n{user_message}"
     else:
         current_content = user_message
     messages.append({"role": "user", "content": current_content})
