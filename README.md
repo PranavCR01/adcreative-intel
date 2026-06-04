@@ -23,7 +23,7 @@
 | | |
 |---|---|
 | Live Demo | [adcreative-intel.vercel.app](https://adcreative-intel.vercel.app) |
-| Demo Video | YouTube — to be filled |
+| Demo Video | [Youtube Link](https://youtu.be/S3rk1Sr2sWU) |
 | Research Notes | [CIA Research & Architecture Notes](https://www.notion.so/CIA-Research-Architecture-Notes-36ea47a2b4cf80d693b8ef5a6aa32209) |
 | Dev Journal | [CIA Project Arc](https://www.notion.so/CIA-Project-Arc-36ea47a2b4cf80aabc94c1ee6ece0570) |
 | GitHub | [PranavCR01/adcreative-intel](https://github.com/PranavCR01/adcreative-intel) |
