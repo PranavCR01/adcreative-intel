@@ -22,7 +22,9 @@ async def upload_creative(
         db.storage.from_("creatives").upload(
             path=storage_path,
             file=image_bytes,
-            file_options={"content-type": "image/jpeg"},
+            # upsert: frontend retries reuse the same upload_id, so a retry must
+            # overwrite the object from the first attempt instead of 409-ing
+            file_options={"content-type": "image/jpeg", "upsert": "true"},
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Upload storage failed: {exc}")
