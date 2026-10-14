@@ -28,7 +28,7 @@ async def insert_upload(
     result = (
         get_db()
         .table("cia_uploads")
-        .upsert({  # idempotent: retries reuse the same client-generated upload_id
+        .insert({
             "id": upload_id,
             "r2_key": r2_key,
             "vertical": vertical,
