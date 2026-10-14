@@ -6,6 +6,12 @@ from api.hf_client import get_heatmap, score_image
 router = APIRouter()
 
 
+def _is_duplicate(exc: Exception) -> bool:
+    # Storage: 409 "Duplicate"; Postgres: 23505 unique_violation
+    msg = str(exc)
+    return "Duplicate" in msg or "409" in msg or "23505" in msg
+
+
 @router.post("")
 async def upload_creative(
     image: UploadFile,
@@ -22,18 +28,21 @@ async def upload_creative(
         db.storage.from_("creatives").upload(
             path=storage_path,
             file=image_bytes,
-            # upsert: frontend retries reuse the same upload_id, so a retry must
-            # overwrite the object from the first attempt instead of 409-ing
-            file_options={"content-type": "image/jpeg", "upsert": "true"},
+            file_options={"content-type": "image/jpeg"},
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Upload storage failed: {exc}")
+        # Frontend retries reuse the same upload_id, so the object from the first
+        # attempt may already exist. Plain insert + tolerate the duplicate instead
+        # of upsert, which needs extra RLS policies (SELECT + UPDATE) on the bucket.
+        if not _is_duplicate(exc):
+            raise HTTPException(status_code=500, detail=f"Upload storage failed: {exc}")
 
     # 2. Insert into Supabase DB (storage_path stored in r2_key column)
     try:
         await insert_upload(upload_id, storage_path, vertical, session_id or upload_id)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to record upload metadata.")
+    except Exception as exc:
+        if not _is_duplicate(exc):
+            raise HTTPException(status_code=500, detail="Failed to record upload metadata.")
 
     # 3. Score via HF Spaces
     try:
